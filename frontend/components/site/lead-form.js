@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ArrowRight, ArrowLeft, Loader2, PartyPopper } from 'lucide-react';
 import { toast } from 'sonner';
 import { SERVICES } from '@/lib/data';
+import { useServices } from './content-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,6 +39,7 @@ function Choice({ active, children, ...props }) {
 }
 
 export function LeadForm({ context = 'website', defaultService = '' }) {
+  const services = useServices();
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
   const { register, handleSubmit, watch, setValue, trigger, formState: { errors, isSubmitting } } = useForm({
@@ -124,7 +126,7 @@ export function LeadForm({ context = 'website', defaultService = '' }) {
                 <div>
                   <Label>Which service do you need? *</Label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {SERVICES.map((s) => (
+                    {services.map((s) => (
                       <Choice key={s.slug} active={values.service === s.name} onClick={() => setValue('service', s.name, { shouldValidate: true })}>{s.name}</Choice>
                     ))}
                   </div>

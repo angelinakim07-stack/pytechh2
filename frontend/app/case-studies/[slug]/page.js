@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, Quote } from 'lucide-react';
-import { getCaseStudy, CASE_STUDIES, COMPANY } from '@/lib/data';
+import { COMPANY } from '@/lib/data';
+import { getContent, listContent } from '@/lib/cms';
+import { pageMetadata } from '@/lib/seo';
+import { cleanHtml } from '@/lib/content-validation';
+export const dynamic = 'force-dynamic';
 import { Reveal } from '@/components/site/reveal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,19 +18,20 @@ const IMG = {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const c = getCaseStudy(slug);
+  const c = await getContent('cases', slug);
   if (!c) return { title: 'Case study not found' };
-  return { title: c.title, description: c.excerpt, alternates: { canonical: `${COMPANY.url}/case-studies/${slug}` } };
+  const title = c.seoTitle || c.title, description = c.seoDescription || c.excerpt;
+  return pageMetadata(`/case-studies/${slug}`, { title, description, keywords: c.keywords, alternates: { canonical: `${COMPANY.url}/case-studies/${slug}` }, openGraph: { title, description, type: 'article', ...(c.image ? { images: [c.image] } : {}) } });
 }
 
 export default async function CaseStudyPage({ params }) {
   const { slug } = await params;
-  const c = getCaseStudy(slug);
+  const c = await getContent('cases', slug);
   if (!c) notFound();
-  const others = CASE_STUDIES.filter((x) => x.slug !== slug);
+  const others = (await listContent('cases')).filter((x) => x.slug !== slug).slice(0, 2);
 
   return (
-    <article className="relative">
+    <article className="relative [overflow-wrap:anywhere]">
       <section className="relative overflow-hidden pt-28 md:pt-36">
         <div className="pointer-events-none absolute inset-0 grid-bg opacity-30" />
         <div className="container relative mx-auto px-6 pb-8">
@@ -36,19 +41,16 @@ export default async function CaseStudyPage({ params }) {
             <span className="text-foreground">{c.client}</span>
           </nav>
           <Badge variant="outline" className="mb-4 rounded-full border-primary/30 bg-primary/5 text-primary">{c.industry}</Badge>
-          <h1 className="max-w-4xl font-display text-4xl font-bold leading-[1.08] tracking-tight md:text-5xl">{c.title}</h1>
+          <h1 data-testid="case-title" className="max-w-4xl font-display text-4xl font-bold leading-[1.08] tracking-tight md:text-5xl">{c.title}</h1>
           <p className="mt-4 max-w-2xl text-lg text-muted-foreground">{c.excerpt}</p>
         </div>
       </section>
 
-      {/* Dashboard mockup placeholder */}
-      <section className="container mx-auto px-6">
+      {(c.image || IMG[c.slug]) && <section className="container mx-auto px-6">
         <div className="relative overflow-hidden rounded-2xl border border-border">
-          <img src={IMG[c.slug]} alt={`${c.client} dashboard`} className="h-[280px] w-full object-cover md:h-[440px]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
-          <span className="glass absolute bottom-4 left-4 rounded-full px-3 py-1 text-xs text-muted-foreground">Dashboard mockup · {c.client}</span>
+          <img data-testid="case-cover" src={c.image || IMG[c.slug]} alt={c.imageAlt || c.title} className="aspect-[16/7] w-full object-contain" />
         </div>
-      </section>
+      </section>}
 
       {/* Outcomes dashboard */}
       <section className="container mx-auto px-6 py-12">
@@ -70,11 +72,11 @@ export default async function CaseStudyPage({ params }) {
         <div className="lg:col-span-2 space-y-10">
           <Reveal>
             <h2 className="font-display text-2xl font-bold">The Challenge</h2>
-            <p className="mt-3 text-muted-foreground">{c.challenge}</p>
+            <p data-testid="case-challenge" className="mt-3 whitespace-pre-wrap text-muted-foreground">{c.challenge}</p>
           </Reveal>
           <Reveal>
             <h2 className="font-display text-2xl font-bold">The Solution</h2>
-            <p className="mt-3 text-muted-foreground">{c.solution}</p>
+            <p data-testid="case-solution" className="mt-3 whitespace-pre-wrap text-muted-foreground">{c.solution}</p>
           </Reveal>
         </div>
         <Reveal delay={0.1}>
@@ -85,15 +87,11 @@ export default async function CaseStudyPage({ params }) {
                 <span key={t} className="rounded-full border border-border bg-background/60 px-3 py-1.5 text-sm text-foreground">{t}</span>
               ))}
             </div>
-            <div className="mt-6 rounded-xl bg-gradient-to-br from-[hsl(var(--brand))]/10 to-[hsl(var(--cobalt))]/10 p-4">
-              <Quote className="h-5 w-5 text-primary" />
-              <p className="mt-2 text-sm italic text-muted-foreground">“PyTech felt like an extension of our own team — senior, fast and outcome-obsessed.”</p>
-              <p className="mt-2 text-xs font-medium">— {c.client}</p>
-            </div>
           </div>
         </Reveal>
       </section>
 
+      {c.body && <section data-testid="case-body" className="cms-prose container mx-auto max-w-4xl px-6 py-10" dangerouslySetInnerHTML={{ __html: cleanHtml(c.body) }} />}
       {/* CTA + others */}
       <section className="container mx-auto px-6 py-12">
         <div className="flex flex-col items-center justify-between gap-6 rounded-3xl border border-border bg-card/50 p-8 text-center md:flex-row md:text-left">

@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, Check, MapPin, Sparkles } from 'lucide-react';
-import { getService, getLocation, buildLocalFaqs, getCaseStudy, SERVICES, LOCATIONS, COMPANY } from '@/lib/data';
+import { getLocation, buildLocalFaqs, LOCATIONS, COMPANY } from '@/lib/data';
+import { getContent, listContent } from '@/lib/cms';
+import { ServiceWork } from '@/components/site/service-work';
+export const dynamic = 'force-dynamic';
 import { Icon } from '@/components/site/icon';
 import { Reveal } from '@/components/site/reveal';
 import { LeadForm } from '@/components/site/lead-form';
@@ -15,7 +18,7 @@ const CASE_BY_PILLAR = { build: 'fintech-trading-platform', automate: 'd2c-whats
 
 export async function generateMetadata({ params }) {
   const { service: sSlug, location: lSlug } = await params;
-  const service = getService(sSlug);
+  const service = await getContent('services', sSlug);
   const location = getLocation(lSlug);
   if (!service || !location) return { title: 'Not found' };
   const title = `${service.name} in ${location.name}`;
@@ -31,13 +34,13 @@ export async function generateMetadata({ params }) {
 
 export default async function ServiceLocationPage({ params }) {
   const { service: sSlug, location: lSlug } = await params;
-  const service = getService(sSlug);
+  const service = await getContent('services', sSlug);
   const location = getLocation(lSlug);
   if (!service || !location) notFound();
 
   const faqs = buildLocalFaqs(service, location);
-  const caseStudy = getCaseStudy(CASE_BY_PILLAR[service.pillar]);
-  const related = SERVICES.filter((s) => s.pillar === service.pillar && s.slug !== service.slug);
+  const caseStudy = await getContent('cases', CASE_BY_PILLAR[service.pillar]);
+  const related = (await listContent('services')).filter((s) => s.pillar === service.pillar && s.slug !== service.slug);
 
   const serviceSchema = {
     '@context': 'https://schema.org', '@type': 'Service', name: `${service.name} in ${location.name}`,
@@ -59,9 +62,9 @@ export default async function ServiceLocationPage({ params }) {
 
   return (
     <article className="relative">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema).replace(/</g, '\\u003c') }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema).replace(/</g, '\\u003c') }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema).replace(/</g, '\\u003c') }} />
 
       {/* Hero */}
       <section className="relative overflow-hidden pt-28 md:pt-36">
@@ -198,6 +201,7 @@ export default async function ServiceLocationPage({ params }) {
           <Reveal delay={0.1}><LeadForm context={`service:${sSlug}@${lSlug}`} defaultService={service.name} /></Reveal>
         </div>
       </section>
+      <ServiceWork service={service} />
     </article>
   );
 }

@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { COMPANY } from '@/lib/data';
+import useSWR from 'swr';
+import { useServices, contentFetcher } from '@/components/site/content-provider';
 
 const HOME_FAQ = [
   { q: 'What does PyTech Digital do?', a: 'PyTech Digital is a full-stack IT and growth studio. We build websites, mobile apps and custom software; design brands and UI/UX; run SEO, AI SEO and Generative Engine Optimization (GEO); and deploy AI automation across WhatsApp, SMS and voice.' },
@@ -47,6 +49,8 @@ const STATS = [
 ];
 
 export default function HomePage() {
+  const services = useServices();
+  const { data: casesData } = useSWR('/api/cms/cases', contentFetcher);
   return (
     <div className="relative">
       {/* ===== HERO ===== */}
@@ -121,7 +125,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="mt-5 grid grid-cols-2 gap-2">
-                  {getServicesByPillar(p.key).map((s) => (
+                  {services.filter((s) => s.pillar === p.key).map((s) => (
                     <Link key={s.slug} href={`/services/${s.slug}`} className="flex items-center gap-2 rounded-lg border border-transparent bg-background/40 px-3 py-2 text-sm text-muted-foreground transition-all hover:border-border hover:text-foreground">
                       <Icon name={s.icon} className="h-4 w-4 opacity-70" />
                       <span className="truncate">{s.name}</span>
@@ -149,11 +153,11 @@ export default function HomePage() {
           </div>
         </Reveal>
         <div className="mt-8 grid gap-5 md:grid-cols-3">
-          {CASE_STUDIES.map((c, i) => (
+          {(casesData?.items || []).slice(0, 3).map((c, i) => (
             <Reveal key={c.slug} delay={i * 0.08}>
               <Link href={`/case-studies/${c.slug}`} className="group block overflow-hidden rounded-2xl border border-border bg-card/50 transition-all hover:border-primary/40 hover:shadow-2xl">
                 <div className="relative aspect-[16/10] overflow-hidden">
-                  <img src={CASE_IMG[c.slug]} alt={c.title} loading="lazy" className="h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105" />
+                  {(c.image || CASE_IMG[c.slug]) && <img src={c.image || CASE_IMG[c.slug]} alt={c.imageAlt || c.title} loading="lazy" className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105" />}
                   <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
                   <Badge className="absolute left-3 top-3 rounded-full bg-background/70 text-foreground backdrop-blur">{c.industry}</Badge>
                 </div>

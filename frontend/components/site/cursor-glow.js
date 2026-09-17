@@ -17,7 +17,7 @@ export function CursorGlow() {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         if (ref.current) {
-          ref.current.style.transform = `translate3d(${e.clientX - 200}px, ${e.clientY - 200}px, 0)`;
+          ref.current.style.transform = `translate3d(${Math.min(e.clientX - 200, window.innerWidth - 400)}px, ${e.clientY - 200}px, 0)`;
         }
       });
     };
@@ -33,7 +33,7 @@ export function CursorGlow() {
     <div
       ref={ref}
       aria-hidden
-      className="pointer-events-none fixed left-0 top-0 z-[5] h-[400px] w-[400px] rounded-full opacity-40 blur-[90px] transition-opacity"
+      className="pointer-events-none fixed left-0 top-0 z-[5] hidden h-[400px] w-[400px] rounded-full opacity-40 blur-[90px] transition-opacity md:block"
       style={{ background: 'radial-gradient(circle, hsl(var(--brand) / 0.45), transparent 60%)' }}
     />
   );

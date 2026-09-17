@@ -1,13 +1,9 @@
 import { MongoClient } from 'mongodb';
 
-let client;
-let db;
+let connection;
 
 export async function getDb() {
-  if (!client) {
-    client = new MongoClient(process.env.MONGO_URL);
-    await client.connect();
-    db = client.db(process.env.DB_NAME);
-  }
-  return db;
+  if (!process.env.MONGO_URL || !process.env.DB_NAME) throw new Error('Mongo configuration is missing');
+  if (!connection) connection = new MongoClient(process.env.MONGO_URL).connect().catch((error) => { connection = null; throw error; });
+  return (await connection).db(process.env.DB_NAME);
 }

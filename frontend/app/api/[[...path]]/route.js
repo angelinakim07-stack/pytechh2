@@ -1,4 +1,3 @@
-import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NextResponse } from 'next/server'
 import { LlmChat, UserMessage } from 'emergentintegrations'
@@ -6,21 +5,14 @@ import { SERVICES, LOCATIONS, JOBS, getJob, DEFAULT_OFFERINGS } from '@/lib/data
 import { putObject, getObject, APP_NAME } from '@/lib/storage'
 import { sendApplicationEmail } from '@/lib/mailer'
 import { SEO_PAGES } from '@/lib/seo'
+import { getDb } from '@/lib/mongo'
+import { listContent, validService } from '@/lib/cms'
+import { cmsRoute } from '@/lib/cms-api'
+import { mediaRoute } from '@/lib/media-api'
+import { safeUrl } from '@/lib/content-validation'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-// ---- MongoDB (cached) ----
-let client
-let db
-async function connectToMongo() {
-  if (!client) {
-    client = new MongoClient(process.env.MONGO_URL)
-    await client.connect()
-    db = client.db(process.env.DB_NAME)
-  }
-  return db
-}
 
 function handleCORS(response) {
   response.headers.set('Access-Control-Allow-Origin', process.env.CORS_ORIGINS || '*')
@@ -53,7 +45,7 @@ async function handleRoute(request, { params }) {
   const method = request.method
 
   try {
-    const db = await connectToMongo()
+    const db = await getDb()
 
     // Health
     if ((route === '/' || route === '/root') && method === 'GET') {
@@ -62,7 +54,7 @@ async function handleRoute(request, { params }) {
 
     // Services + locations metadata (for programmatic SEO / discovery)
     if (route === '/services' && method === 'GET') {
-      return handleCORS(NextResponse.json({ services: SERVICES, locations: LOCATIONS }))
+      return handleCORS(NextResponse.json({ services: await listContent('services'), locations: LOCATIONS }))
     }
 
     // ---- Admin auth (simple password) ----
@@ -76,6 +68,9 @@ async function handleRoute(request, { params }) {
       const key = request.headers.get('x-admin-key') || request.nextUrl.searchParams.get('key')
       return !!key && key === (process.env.ADMIN_PASSWORD || '')
     }
+
+    if (route.startsWith('/cms/')) return handleCORS(await cmsRoute(request, route, db, isAdmin()))
+    if (route === '/media' || route.startsWith('/media/')) return handleCORS(await mediaRoute(request, route, db, isAdmin()))
 
     // ---- Leads ----
     if (route === '/leads' && method === 'POST') {
@@ -221,19 +216,23 @@ async function handleRoute(request, { params }) {
 
     // ---- Projects (public read, admin write) ----
     if (route === '/projects' && method === 'GET') {
-      const projects = await db.collection('projects').find({}).sort({ order: 1, createdAt: -1 }).limit(200).toArray()
+      const serviceSlug = request.nextUrl.searchParams.get('service')
+      const projects = await db.collection('projects').find(serviceSlug ? { serviceSlug } : {}, { projection: { _id: 0 } }).sort({ order: 1, createdAt: -1 }).limit(200).toArray()
       return handleCORS(NextResponse.json({ projects: projects.map(({ _id, ...rest }) => rest) }))
     }
     if (route === '/projects' && method === 'POST') {
       if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
       const b = await request.json()
-      if (!b.name) return handleCORS(NextResponse.json({ error: 'name is required' }, { status: 400 }))
+      if (typeof b.name !== 'string' || !b.name.trim()) return handleCORS(NextResponse.json({ error: 'name is required' }, { status: 400 }))
+      if (!(await validService(b.serviceSlug))) return handleCORS(NextResponse.json({ error: 'Choose one published service for this project.' }, { status: 400 }))
+      if (![b.url, b.image].every((v) => v == null || (typeof v === 'string' && safeUrl(v)))) return handleCORS(NextResponse.json({ error: 'Use a valid http(s) URL.' }, { status: 400 }))
       const project = {
         id: uuidv4(),
         name: b.name,
         url: b.url || '',
         client: b.client || '',
         category: b.category || '',
+        serviceSlug: b.serviceSlug,
         deliveryTime: b.deliveryTime || '',
         challenges: b.challenges || '',
         description: b.description || '',
@@ -251,8 +250,13 @@ async function handleRoute(request, { params }) {
       if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
       const b = await request.json()
       if (!b.id) return handleCORS(NextResponse.json({ error: 'id is required' }, { status: 400 }))
+      const existing = await db.collection('projects').findOne({ id: b.id }, { projection: { _id: 0 } })
+      if (!existing) return handleCORS(NextResponse.json({ error: 'Project not found' }, { status: 404 }))
+      if ('serviceSlug' in b && !(await validService(b.serviceSlug))) return handleCORS(NextResponse.json({ error: 'Choose one published service for this project.' }, { status: 400 }))
+      if ('name' in b && (typeof b.name !== 'string' || !b.name.trim())) return handleCORS(NextResponse.json({ error: 'Project name is required' }, { status: 400 }))
+      if (![b.url, b.image].every((v) => v == null || (typeof v === 'string' && safeUrl(v)))) return handleCORS(NextResponse.json({ error: 'Use a valid http(s) URL.' }, { status: 400 }))
       const set = {}
-      for (const f of ['name', 'url', 'client', 'category', 'deliveryTime', 'challenges', 'description', 'image']) if (f in b) set[f] = b[f]
+      for (const f of ['name', 'url', 'client', 'category', 'serviceSlug', 'deliveryTime', 'challenges', 'description', 'image']) if (f in b) set[f] = b[f]
       if ('featured' in b) set.featured = !!b.featured
       if ('order' in b) set.order = Number(b.order) || 0
       if ('tech' in b) set.tech = Array.isArray(b.tech) ? b.tech : String(b.tech).split(',').map((t) => t.trim()).filter(Boolean)
@@ -328,7 +332,8 @@ async function handleRoute(request, { params }) {
     if (route === '/seo' && method === 'GET') {
       if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
       const overrides = await db.collection('seo').find({}).toArray()
-      return handleCORS(NextResponse.json({ pages: SEO_PAGES, overrides: overrides.map(({ _id, ...rest }) => rest) }))
+      const dynamicPages = (await Promise.all(['services', 'cases', 'posts'].map(async (type) => (await listContent(type, true)).map((item) => ({ path: `/${{ services: 'services', cases: 'case-studies', posts: 'blog' }[type]}/${item.slug}`, label: item.name || item.title }))))).flat()
+      return handleCORS(NextResponse.json({ pages: [...SEO_PAGES, { path: '/blog', label: 'Blog / News' }, ...dynamicPages], overrides: overrides.map(({ _id, ...rest }) => rest) }))
     }
     if (route === '/seo' && method === 'PUT') {
       if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
@@ -341,7 +346,8 @@ async function handleRoute(request, { params }) {
         keywords: Array.isArray(b.keywords) ? b.keywords : String(b.keywords || '').split(',').map((k) => k.trim()).filter(Boolean),
         updatedAt: new Date(),
       }
-      await db.collection('seo').updateOne({ path: b.path }, { $set: set }, { upsert: true })
+      if (!set.title && !set.description && !set.keywords.length) await db.collection('seo').deleteOne({ path: b.path })
+      else await db.collection('seo').updateOne({ path: b.path }, { $set: set }, { upsert: true })
       return handleCORS(NextResponse.json({ ok: true }))
     }
 

@@ -11,6 +11,9 @@ import { pageMetadata } from '@/lib/seo';
 import { CursorGlow } from '@/components/site/cursor-glow';
 import { Analytics } from '@/components/site/analytics';
 import { COMPANY } from '@/lib/data';
+import { listContent } from '@/lib/cms';
+import { ContentProvider } from '@/components/site/content-provider';
+import { PublicOnly } from '@/components/site/public-only';
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space', display: 'swap' });
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -101,7 +104,8 @@ const siteSchema = {
   ],
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const services = await listContent('services');
   return (
     <html lang="en" suppressHydrationWarning className={`${spaceGrotesk.variable} ${inter.variable}`}>
       <head>
@@ -110,14 +114,18 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <Providers>
-          <CursorGlow />
+          <ContentProvider services={services}>
+          <PublicOnly><CursorGlow /></PublicOnly>
           <Navbar />
           <main className="relative min-h-screen overflow-x-hidden">{children}</main>
-          <Footer />
-          <WhatsAppFab />
-          <CallFab />
-          <TriageChatbot />
+          <Footer services={services} />
+          <PublicOnly>
+            <WhatsAppFab />
+            <CallFab />
+            <TriageChatbot />
+          </PublicOnly>
           <BookCallDialog />
+          </ContentProvider>
         </Providers>
         <Analytics />
       </body>

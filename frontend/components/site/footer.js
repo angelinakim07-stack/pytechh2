@@ -2,15 +2,14 @@ import Link from 'next/link';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { COMPANY, PILLARS, getServicesByPillar } from '@/lib/data';
 
-export function Footer() {
+export function Footer({ services = [] }) {
   return (
     <footer className="relative mt-24 border-t border-border/60 bg-card/40">
       <div className="container mx-auto px-6 py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-6">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2.5">
-              <img src="/pt-logo.png" alt="PyTech Digital" className="h-9 w-9 rounded-lg object-cover ring-1 ring-border" />
-              <span className="font-display text-lg font-semibold">PyTech Digital</span>
+              <Link href="/" data-testid="footer-logo-link" aria-label="PyTech Digital home"><img src="/pt-logo.png" alt="PyTech Digital" data-testid="footer-logo-image" className="h-20 w-20 object-contain" /></Link>
             </div>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">{COMPANY.description}</p>
             <div className="mt-5 space-y-2 text-sm text-muted-foreground">
@@ -23,7 +22,7 @@ export function Footer() {
               <Link href="/pricing" data-testid="footer-pricing" className="text-muted-foreground transition-colors hover:text-foreground">Pricing</Link>
               <Link href="/work" className="text-muted-foreground transition-colors hover:text-foreground">Our Work</Link>
               <Link href="/careers" className="text-muted-foreground transition-colors hover:text-foreground">Careers</Link>
-              <Link href="/resources" className="text-muted-foreground transition-colors hover:text-foreground">Learning Hub</Link>
+              <Link href="/blog" data-testid="footer-blog" className="text-muted-foreground transition-colors hover:text-foreground">Blog / News</Link>
               <Link href="/support" className="text-muted-foreground transition-colors hover:text-foreground">Support</Link>
               <Link href="/locations" className="text-muted-foreground transition-colors hover:text-foreground">Locations</Link>
               <Link href="/case-studies" className="text-muted-foreground transition-colors hover:text-foreground">Case Studies</Link>
@@ -33,9 +32,9 @@ export function Footer() {
             <div key={p.key}>
               <p className="font-display text-sm font-semibold" style={{ color: p.accent }}>{p.label}</p>
               <ul className="mt-3 space-y-2">
-                {getServicesByPillar(p.key).map((s) => (
+                {services.filter((s) => s.pillar === p.key).map((s) => (
                   <li key={s.slug}>
-                    <Link href={`/services/${s.slug}`} className="text-sm text-muted-foreground transition-colors hover:text-foreground">{s.name}</Link>
+                    <Link data-testid={`footer-service-${s.slug}`} href={`/services/${s.slug}`} className="text-sm text-muted-foreground transition-colors hover:text-foreground">{s.name}</Link>
                   </li>
                 ))}
               </ul>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="14" skipped="0" tests="16" time="41.144" timestamp="2026-09-17T12:12:42.866163+00:00" hostname="agent-env-01f32d7f-9298-495b-957d-8088b7a4d675"><testcase classname="tests.test_pytech_iter5.TestCmsPostsAndSanitization" name="test_post_create_draft_publish_unpublish_flow" time="39.804"><failure message="assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:181: in test_post_create_draft_publish_unpublish_flow
+    assert detail.status_code == 200
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_admin_login_success_and_failure" time="0.866" /><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/]" time="7.760" /><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/pricing]" time="31.170"><failure message="AssertionError: /pricing returned 502&#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:116: in test_public_pages_respond
+    assert r.status_code == 200, f"{path} returned {r.status_code}"
+E   AssertionError: /pricing returned 502
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/careers]" time="0.078"><failure message="AssertionError: /careers returned 502&#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:116: in test_public_pages_respond
+    assert r.status_code == 200, f"{path} returned {r.status_code}"
+E   AssertionError: /careers returned 502
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestServicesProjectsAndCases" name="test_service_publish_project_rules_and_case_visibility" time="0.076"><failure message="AssertionError: Internal Server Error&#10;assert 500 == 201&#10; +  where 500 = &lt;Response [500]&gt;.status_code">backend/tests/test_pytech_iter5.py:240: in test_service_publish_project_rules_and_case_visibility
+    assert svc_a.status_code == 201, svc_a.text
+E   AssertionError: Internal Server Error
+E   assert 500 == 201
+E    +  where 500 = &lt;Response [500]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/work]" time="0.069"><failure message="AssertionError: /work returned 502&#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:116: in test_public_pages_respond
+    assert r.status_code == 200, f"{path} returned {r.status_code}"
+E   AssertionError: /work returned 502
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestMediaApi" name="test_media_admin_upload_and_validation" time="0.339"><failure message="assert 500 == 401&#10; +  where 500 = &lt;Response [500]&gt;.status_code">backend/tests/test_pytech_iter5.py:429: in test_media_admin_upload_and_validation
+    assert unauthorized.status_code == 401
+E   assert 500 == 401
+E    +  where 500 = &lt;Response [500]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/services]" time="0.072"><failure message="AssertionError: /services returned 502&#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:116: in test_public_pages_respond
+    assert r.status_code == 200, f"{path} returned {r.status_code}"
+E   AssertionError: /services returned 502
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/case-studies]" time="0.070"><failure message="AssertionError: /case-studies returned 502&#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:116: in test_public_pages_respond
+    assert r.status_code == 200, f"{path} returned {r.status_code}"
+E   AssertionError: /case-studies returned 502
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/blog]" time="0.082"><failure message="AssertionError: /blog returned 502&#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:116: in test_public_pages_respond
+    assert r.status_code == 200, f"{path} returned {r.status_code}"
+E   AssertionError: /blog returned 502
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/locations]" time="0.067"><failure message="AssertionError: /locations returned 502&#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:116: in test_public_pages_respond
+    assert r.status_code == 200, f"{path} returned {r.status_code}"
+E   AssertionError: /locations returned 502
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/sitemap.xml]" time="0.068"><failure message="AssertionError: /sitemap.xml returned 502&#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:116: in test_public_pages_respond
+    assert r.status_code == 200, f"{path} returned {r.status_code}"
+E   AssertionError: /sitemap.xml returned 502
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/llms.txt]" time="0.072"><failure message="AssertionError: /llms.txt returned 502&#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:116: in test_public_pages_respond
+    assert r.status_code == 200, f"{path} returned {r.status_code}"
+E   AssertionError: /llms.txt returned 502
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_public_pages_respond[/admin]" time="0.067"><failure message="AssertionError: /admin returned 502&#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:116: in test_public_pages_respond
+    assert r.status_code == 200, f"{path} returned {r.status_code}"
+E   AssertionError: /admin returned 502
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="tests.test_pytech_iter5.TestAdminAuthAndRegressionRoutes" name="test_resources_redirects_are_permanent" time="0.071"><failure message="assert 502 in (301, 308)&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_pytech_iter5.py:120: in test_resources_redirects_are_permanent
+    assert r1.status_code in (301, 308)
+E   assert 502 in (301, 308)
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase></testsuite></testsuites>

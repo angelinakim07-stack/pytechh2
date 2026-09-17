@@ -7,48 +7,43 @@ import { PILLARS, getServicesByPillar } from '@/lib/data';
 import { Icon } from '@/components/site/icon';
 import { Magnetic } from '@/components/site/magnetic';
 import { ThemeToggle } from '@/components/site/theme-toggle';
+import { useServices } from './content-provider';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2.5">
-      <img src="/pt-logo.png" alt="PyTech Digital" className="h-9 w-9 rounded-lg object-cover shadow-lg ring-1 ring-border" />
-      <span className="font-display flex flex-col leading-none">
-        <span className="text-lg font-semibold tracking-tight">
-          PyTech<span className="text-primary">.</span>
-        </span>
-        <span className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.34em] text-muted-foreground">
-          Digital
-        </span>
-      </span>
+    <Link href="/" data-testid="navbar-logo-link" aria-label="PyTech Digital home" className="flex shrink-0 items-center">
+      <img src="/pt-logo.png" data-testid="navbar-logo-image" alt="PyTech Digital" className="h-14 w-14 object-contain sm:h-16 sm:w-16" />
     </Link>
   );
 }
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const services = useServices();
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3">
-      <div className="glass container mx-auto flex h-14 items-center justify-between rounded-2xl px-4 shadow-lg">
+      <div className="glass container mx-auto flex h-[72px] items-center justify-between rounded-2xl px-4 shadow-lg sm:h-20">
         <Logo />
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav className="hidden items-center gap-1 2xl:flex">
           <div className="group relative">
-            <button className="flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            <button data-testid="nav-services-menu" className="flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               Services <ChevronDown className="h-4 w-4 transition-transform group-hover:rotate-180" />
             </button>
             <div className="invisible absolute left-1/2 top-full w-[720px] -translate-x-1/2 pt-3 opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100">
-              <div className="glass grid grid-cols-2 gap-2 rounded-2xl p-3 shadow-2xl">
+              <div className="glass grid max-h-[65vh] grid-cols-2 gap-2 overflow-y-auto rounded-2xl p-3 shadow-2xl">
                 {PILLARS.map((p) => (
                   <div key={p.key} className="rounded-xl p-2">
                     <p className="mb-1 flex items-center gap-2 px-2 text-xs font-semibold uppercase tracking-widest" style={{ color: p.accent }}>
                       <Icon name={p.icon} className="h-3.5 w-3.5" /> {p.label}
                     </p>
-                    {getServicesByPillar(p.key).map((s) => (
+                    {services.filter((s) => s.pillar === p.key).map((s) => (
                       <Link
                         key={s.slug}
+                        data-testid={`nav-service-${s.slug}`}
                         href={`/services/${s.slug}`}
                         className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                       >
@@ -67,7 +62,7 @@ export function Navbar() {
           <Link href="/work" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Work</Link>
           <Link href="/pricing" data-testid="nav-pricing" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Pricing</Link>
           <Link href="/careers" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Careers</Link>
-          <Link href="/resources" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Resources</Link>
+          <Link href="/blog" data-testid="nav-blog" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Blog / News</Link>
           <Link href="/support" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Support</Link>
           <Link href="/#contact" className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Contact</Link>
         </nav>
@@ -83,7 +78,7 @@ export function Navbar() {
           {/* Mobile */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Menu">
+              <Button variant="ghost" size="icon" data-testid="mobile-menu-open" className="2xl:hidden" aria-label="Menu">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -93,8 +88,8 @@ export function Navbar() {
                 {PILLARS.map((p) => (
                   <div key={p.key} className="mb-2">
                     <p className="mb-1 text-xs font-semibold uppercase tracking-widest" style={{ color: p.accent }}>{p.label}</p>
-                    {getServicesByPillar(p.key).map((s) => (
-                      <Link key={s.slug} href={`/services/${s.slug}`} onClick={() => setOpen(false)} className="block rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground">{s.name}</Link>
+                    {services.filter((s) => s.pillar === p.key).map((s) => (
+                      <Link key={s.slug} data-testid={`mobile-service-${s.slug}`} href={`/services/${s.slug}`} onClick={() => setOpen(false)} className="block rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground">{s.name}</Link>
                     ))}
                   </div>
                 ))}
@@ -105,7 +100,7 @@ export function Navbar() {
                 <Link href="/careers" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 font-medium">Careers</Link>
                 <Link href="/services" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 font-medium">All Services</Link>
                 <Link href="/locations" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 font-medium">Locations</Link>
-                <Link href="/resources" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 font-medium">Resources</Link>
+                <Link href="/blog" data-testid="mobile-nav-blog" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 font-medium">Blog / News</Link>
                 <Link href="/support" onClick={() => setOpen(false)} className="rounded-md px-2 py-2 font-medium">Support</Link>
                 <Button asChild className="mt-3 rounded-full"><Link href="/#contact" onClick={() => setOpen(false)}>Book Strategy Call</Link></Button>
               </div>

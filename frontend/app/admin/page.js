@@ -14,6 +14,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { ContentManager } from '@/components/admin/content-manager';
+import { ImageField } from '@/components/admin/image-field';
+import { useServices } from '@/components/site/content-provider';
 
 const KEY_STORE = 'pytech-admin-key';
 const fmt = (d) => { try { return new Date(d).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }); } catch { return ''; } };
@@ -30,7 +33,7 @@ function TierBadge({ tier }) {
   return <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${m.cls}`}>{tier === 'hot' && <Flame className="h-3 w-3" />}{m.label}</span>;
 }
 
-const EMPTY_PROJECT = { id: '', name: '', url: '', client: '', category: '', deliveryTime: '', challenges: '', description: '', tech: '', image: '', featured: false };
+const EMPTY_PROJECT = { id: '', name: '', url: '', client: '', category: '', serviceSlug: '', deliveryTime: '', challenges: '', description: '', tech: '', image: '', featured: false };
 const EMPTY_OFFERING = { id: '', title: '', slug: '', icon: 'Sparkles', serviceSlug: '', blurb: '', points: '', image: '', priceInr: '', priceUsd: '', priceUnit: 'project', priceNote: '', order: 99, featured: true };
 
 export default function AdminPage() {
@@ -126,10 +129,10 @@ export default function AdminPage() {
           <p className="mt-1 text-sm text-muted-foreground">Enter the password to manage leads, projects &amp; careers.</p>
           <div className="mt-6">
             <Label htmlFor="pwd">Password</Label>
-            <Input id="pwd" type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} className="mt-1.5" placeholder="••••••••" autoFocus />
-            {authError && <p className="mt-2 text-xs text-destructive">{authError}</p>}
+            <Input id="pwd" data-testid="admin-password" type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} className="mt-1.5" placeholder="••••••••" autoFocus />
+            {authError && <p data-testid="admin-login-error" className="mt-2 text-xs text-destructive">{authError}</p>}
           </div>
-          <Button type="submit" className="mt-5 w-full rounded-full glow-brand" disabled={!pwd}>Unlock dashboard</Button>
+          <Button type="submit" data-testid="admin-login-submit" className="mt-5 w-full rounded-full glow-brand" disabled={!pwd}>Unlock dashboard</Button>
         </form>
       </div>
     );
@@ -141,7 +144,7 @@ export default function AdminPage() {
         <div>
           <p className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-primary">Internal</p>
           <h1 className="mt-1 font-display text-3xl font-bold tracking-tight md:text-4xl">Admin dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Leads, AI conversations, projects &amp; career applications.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Content, projects, enquiries &amp; careers.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => load(key)} className="rounded-full" disabled={loading}>
@@ -157,16 +160,20 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="chats" className="mt-8">
-        <TabsList className="flex flex-wrap gap-1 rounded-2xl">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 rounded-lg">
           <TabsTrigger value="chats" className="rounded-full gap-2"><MessagesSquare className="h-4 w-4" /> Chats <Badge variant="secondary" className="ml-1 rounded-full">{sessions.length}</Badge></TabsTrigger>
           <TabsTrigger value="leads" className="rounded-full gap-2"><Users className="h-4 w-4" /> Leads <Badge variant="secondary" className="ml-1 rounded-full">{leads.length}</Badge></TabsTrigger>
-          <TabsTrigger value="projects" className="rounded-full gap-2"><FolderGit2 className="h-4 w-4" /> Projects <Badge variant="secondary" className="ml-1 rounded-full">{projects.length}</Badge></TabsTrigger>
+          <TabsTrigger value="projects" data-testid="tab-projects" className="rounded-full gap-2"><FolderGit2 className="h-4 w-4" /> Projects <Badge variant="secondary" className="ml-1 rounded-full">{projects.length}</Badge></TabsTrigger>
+          <TabsTrigger value="posts" data-testid="tab-posts" className="rounded-full gap-2"><FileText className="h-4 w-4" /> Blog / News</TabsTrigger>
+          <TabsTrigger value="cases" data-testid="tab-cases" className="rounded-full gap-2"><FolderGit2 className="h-4 w-4" /> Case Studies</TabsTrigger>
+          <TabsTrigger value="services" data-testid="tab-services" className="rounded-full gap-2"><Settings2 className="h-4 w-4" /> Services</TabsTrigger>
           <TabsTrigger value="offerings" data-testid="tab-offerings" className="rounded-full gap-2"><Tags className="h-4 w-4" /> Offerings &amp; Pricing <Badge variant="secondary" className="ml-1 rounded-full">{offerings.length}</Badge></TabsTrigger>
           <TabsTrigger value="applications" className="rounded-full gap-2"><Briefcase className="h-4 w-4" /> Applications <Badge variant="secondary" className="ml-1 rounded-full">{applications.length}</Badge></TabsTrigger>
           <TabsTrigger value="seo" data-testid="tab-seo" className="rounded-full gap-2"><Search className="h-4 w-4" /> SEO</TabsTrigger>
           <TabsTrigger value="settings" className="rounded-full gap-2"><Settings2 className="h-4 w-4" /> Email</TabsTrigger>
         </TabsList>
 
+        {['posts', 'cases', 'services'].map((type) => <TabsContent key={type} value={type} className="mt-8 min-w-0"><ContentManager type={type} adminKey={key} /></TabsContent>)}
         {/* CONVERSATIONS */}
         <TabsContent value="chats" className="mt-6">
           <div className="mb-4 flex flex-wrap gap-2">
@@ -313,21 +320,27 @@ export default function AdminPage() {
 function ProjectsManager({ adminKey, projects, reload }) {
   const [form, setForm] = useState(EMPTY_PROJECT);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [serviceFilter, setServiceFilter] = useState('all');
+  const services = useServices();
+  const filtered = projects.filter((p) => serviceFilter === 'all' || (serviceFilter === 'untagged' ? !p.serviceSlug : p.serviceSlug === serviceFilter));
   const editing = !!form.id;
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   async function save(e) {
     e.preventDefault();
     if (!form.name.trim()) { toast.error('Project name is required'); return; }
+    if (!form.serviceSlug) { toast.error('Choose a service for this project'); return; }
     setSaving(true);
     try {
       const method = editing ? 'PUT' : 'POST';
       const res = await fetch('/api/projects', { method, headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey }, body: JSON.stringify(form) });
-      if (!res.ok) throw new Error('failed');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save project');
       toast.success(editing ? 'Project updated' : 'Project added');
       setForm(EMPTY_PROJECT);
       reload();
-    } catch { toast.error('Could not save project'); }
+    } catch (e) { toast.error(e.message); }
     finally { setSaving(false); }
   }
 
@@ -343,7 +356,8 @@ function ProjectsManager({ adminKey, projects, reload }) {
 
   async function toggleFeatured(p) {
     try {
-      await fetch('/api/projects', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey }, body: JSON.stringify({ id: p.id, featured: !p.featured }) });
+      const res = await fetch('/api/projects', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey }, body: JSON.stringify({ id: p.id, featured: !p.featured }) });
+      if (!res.ok) throw new Error('Update failed');
       reload();
     } catch { toast.error('Could not update'); }
   }
@@ -355,52 +369,55 @@ function ProjectsManager({ adminKey, projects, reload }) {
 
   const inp = 'mt-1.5';
   return (
-    <div className="grid gap-6 lg:grid-cols-5">
-      <form onSubmit={save} className="lg:col-span-2 h-fit rounded-2xl border border-border bg-card/50 p-5">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-5">
+      <form onSubmit={save} className="min-w-0 lg:col-span-2 h-fit rounded-lg border border-border bg-card/50 p-5">
         <p className="font-display text-lg font-semibold">{editing ? 'Edit project' : 'Add a project'}</p>
         <div className="mt-4 space-y-3">
           <div><Label htmlFor="p-name">Project name *</Label><Input id="p-name" data-testid="project-name" value={form.name} onChange={set('name')} className={inp} placeholder="Velocity Trading Platform" /></div>
+          <div><Label htmlFor="p-service">Service *</Label><select id="p-service" data-testid="project-service" value={form.serviceSlug} onChange={set('serviceSlug')} required className="cms-select mt-1.5"><option value="">Select one service</option>{services.map((s) => <option key={s.slug} value={s.slug}>{s.name}</option>)}</select></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label htmlFor="p-client">Client</Label><Input id="p-client" value={form.client} onChange={set('client')} className={inp} placeholder="Velocity Markets" /></div>
-            <div><Label htmlFor="p-cat">Category</Label><Input id="p-cat" value={form.category} onChange={set('category')} className={inp} placeholder="Web App" /></div>
+            <div><Label htmlFor="p-client">Client</Label><Input id="p-client" data-testid="project-client" value={form.client} onChange={set('client')} className={inp} placeholder="Velocity Markets" /></div>
+            <div><Label htmlFor="p-cat">Category</Label><Input id="p-cat" data-testid="project-category" value={form.category} onChange={set('category')} className={inp} placeholder="Web App" /></div>
           </div>
           <div><Label htmlFor="p-url">Project URL</Label><Input id="p-url" data-testid="project-url" value={form.url} onChange={set('url')} className={inp} placeholder="https://…" /></div>
           <div><Label htmlFor="p-delivery">Delivery time</Label><Input id="p-delivery" data-testid="project-delivery" value={form.deliveryTime} onChange={set('deliveryTime')} className={inp} placeholder="e.g. 8 weeks" /></div>
-          <div><Label htmlFor="p-tech">Tech (comma separated)</Label><Input id="p-tech" value={form.tech} onChange={set('tech')} className={inp} placeholder="Next.js, MongoDB, Redis" /></div>
-          <div><Label htmlFor="p-image">Image URL</Label><Input id="p-image" value={form.image} onChange={set('image')} className={inp} placeholder="https://…" /></div>
-          <div><Label htmlFor="p-desc">Short description</Label><Textarea id="p-desc" value={form.description} onChange={set('description')} className={inp} rows={2} placeholder="One or two lines about the project." /></div>
+          <div><Label htmlFor="p-tech">Tech (comma separated)</Label><Input id="p-tech" data-testid="project-tech" value={form.tech} onChange={set('tech')} className={inp} placeholder="Next.js, MongoDB, Redis" /></div>
+          <ImageField id="project-image" value={form.image} onChange={(v) => setForm((f) => ({ ...f, image: v }))} adminKey={adminKey} onBusy={setUploading} />
+          <div><Label htmlFor="p-desc">Short description</Label><Textarea id="p-desc" data-testid="project-description" value={form.description} onChange={set('description')} className={inp} rows={2} placeholder="One or two lines about the project." /></div>
           <div><Label htmlFor="p-chal">Challenges faced</Label><Textarea id="p-chal" data-testid="project-challenges" value={form.challenges} onChange={set('challenges')} className={inp} rows={3} placeholder="What challenges did we solve?" /></div>
           <label className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-background/50 px-3 py-2">
             <span className="flex items-center gap-2 text-sm"><Star className="h-4 w-4 text-primary" /> Feature on homepage</span>
-            <Switch checked={form.featured} onCheckedChange={(v) => setForm((f) => ({ ...f, featured: v }))} />
+            <Switch data-testid="project-featured" checked={form.featured} onCheckedChange={(v) => setForm((f) => ({ ...f, featured: v }))} />
           </label>
         </div>
         <div className="mt-4 flex gap-2">
-          <Button type="submit" data-testid="project-save" disabled={saving} className="flex-1 rounded-full glow-brand">
+          <Button type="submit" data-testid="project-save" disabled={saving || uploading} className="flex-1 rounded-full glow-brand">
             {saving ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {editing ? 'Update' : 'Add project'}
           </Button>
-          {editing && <Button type="button" variant="outline" className="rounded-full" onClick={() => setForm(EMPTY_PROJECT)}>Cancel</Button>}
+          {editing && <Button type="button" data-testid="project-cancel" variant="outline" className="rounded-full" onClick={() => setForm(EMPTY_PROJECT)}>Cancel</Button>}
         </div>
       </form>
 
-      <div className="lg:col-span-3">
-        {projects.length === 0 ? (
+      <div className="min-w-0 lg:col-span-3">
+        <select aria-label="Filter projects by service" data-testid="admin-project-filter" value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)} className="cms-select mb-4"><option value="all">All services</option><option value="untagged">Needs service tag</option>{services.map((s) => <option key={s.slug} value={s.slug}>{s.name}</option>)}</select>
+        {filtered.length === 0 ? (
           <Empty label="No projects yet. Add your first project on the left — it will show on the public Our Work page." />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {projects.map((p) => (
-              <div key={p.id} className="flex flex-col rounded-2xl border border-border bg-card/50 p-4">
+            {filtered.map((p) => (
+              <div key={p.id} data-testid={`admin-project-${p.id}`} className="flex min-w-0 flex-col break-words rounded-lg border border-border bg-card/50 p-4">
                 {p.image && <img src={p.image} alt={p.name} className="mb-3 h-28 w-full rounded-lg object-cover" />}
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-display font-semibold">{p.name}</p>
                   {p.featured && <Star className="h-4 w-4 flex-none fill-primary text-primary" />}
                 </div>
                 {p.category && <span className="mt-1 text-xs text-muted-foreground">{p.category}{p.client ? ` · ${p.client}` : ''}</span>}
+                <span data-testid={`project-service-label-${p.id}`} className={`mt-2 text-xs ${p.serviceSlug ? 'text-primary' : 'text-amber-500'}`}>{services.find((s) => s.slug === p.serviceSlug)?.name || 'Needs service tag'}</span>
                 {p.deliveryTime && <span className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground"><Clock className="h-3 w-3" /> {p.deliveryTime}</span>}
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" className="rounded-full" onClick={() => edit(p)}>Edit</Button>
-                  <Button size="sm" variant="ghost" className="rounded-full" onClick={() => toggleFeatured(p)}>{p.featured ? 'Unfeature' : 'Feature'}</Button>
-                  <Button size="sm" variant="ghost" className="rounded-full text-destructive hover:text-destructive" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4" /></Button>
+                  <Button size="sm" data-testid={`project-edit-${p.id}`} variant="outline" className="rounded-full" onClick={() => edit(p)}>Edit</Button>
+                  <Button size="sm" data-testid={`project-feature-${p.id}`} variant="ghost" className="rounded-full" onClick={() => toggleFeatured(p)}>{p.featured ? 'Unfeature' : 'Feature'}</Button>
+                  <Button size="sm" data-testid={`project-delete-${p.id}`} aria-label="Delete project" variant="ghost" className="rounded-full text-destructive hover:text-destructive" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
             ))}

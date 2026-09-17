@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, MapPin, Check } from 'lucide-react';
 import { getLocation, buildLocationFaqs, PILLARS, getServicesByPillar, SERVICES, LOCATIONS, COMPANY } from '@/lib/data';
+import { listContent } from '@/lib/cms';
 import { Icon } from '@/components/site/icon';
 import { Reveal } from '@/components/site/reveal';
 import { ServiceExtras } from '@/components/site/service-extras';
@@ -26,6 +27,7 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function LocationHubPage({ params }) {
+  const services = await listContent('services');
   const { location: slug } = await params;
   const loc = getLocation(slug);
   if (!loc) notFound();
@@ -78,7 +80,7 @@ export default async function LocationHubPage({ params }) {
             <div key={p.key}>
               <p className="mb-3 flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-widest" style={{ color: p.accent }}><Icon name={p.icon} className="h-4 w-4" /> {p.label}</p>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {getServicesByPillar(p.key).map((s) => (
+                {services.filter((s) => s.pillar === p.key).map((s) => (
                   <Link key={s.slug} href={`/services/${s.slug}/${slug}`} className="group flex items-center gap-2 rounded-xl border border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground">
                     <Icon name={s.icon} className="h-4 w-4 flex-none text-primary" />
                     <span className="truncate">{s.name} in {loc.name.split(',')[0]}</span>

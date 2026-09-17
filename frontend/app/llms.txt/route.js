@@ -1,10 +1,14 @@
 import { COMPANY, SERVICES, DEFAULT_OFFERINGS, LOCATIONS } from '@/lib/data';
+import { listContent } from '@/lib/cms';
+import { getDb } from '@/lib/mongo';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const offerings = DEFAULT_OFFERINGS.map((o) => `- ${o.title}: ${o.blurb}${o.priceInr ? ` Starting from INR ${o.priceInr.toLocaleString('en-IN')}${o.priceUsd ? ` (USD ${o.priceUsd})` : ''} per ${o.priceUnit}.` : ''}`).join('\n');
-  const services = SERVICES.map((s) => `- ${s.name}: ${COMPANY.url}/services/${s.slug}`).join('\n');
+  const db = await getDb();
+  const currentOfferings = await db.collection('offerings').find({}, { projection: { _id: 0 } }).sort({ order: 1 }).toArray();
+  const offerings = currentOfferings.map((o) => `- ${o.title}: ${o.blurb}`).join('\n');
+  const services = (await listContent('services')).map((s) => `- ${s.name}: ${COMPANY.url}/services/${s.slug}`).join('\n');
   const hubs = LOCATIONS.filter((l) => l.hub).map((l) => l.name).join(', ');
 
   const body = `# ${COMPANY.legalName}
@@ -20,7 +24,7 @@ ${offerings}
 - Phone / WhatsApp: ${COMPANY.phone}
 - Founded: ${COMPANY.founded}
 - Serves: ${hubs} and clients across India, UAE, UK, Singapore and the US.
-- Pricing page: ${COMPANY.url}/pricing (websites from INR 20,000 / USD 250; mobile apps from INR 99,999 / USD 1,999)
+- Current pricing: ${COMPANY.url}/pricing
 
 ## Service pages
 ${services}
@@ -29,6 +33,7 @@ ${services}
 - Pricing: ${COMPANY.url}/pricing
 - Our work: ${COMPANY.url}/work
 - Case studies: ${COMPANY.url}/case-studies
+- Blog and news: ${COMPANY.url}/blog
 - Careers: ${COMPANY.url}/careers
 - Locations: ${COMPANY.url}/locations
 - Sitemap: ${COMPANY.url}/sitemap.xml

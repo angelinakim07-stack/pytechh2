@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { PILLARS, getServicesByPillar } from '@/lib/data';
+import { listContent } from '@/lib/cms';
 import { Icon } from '@/components/site/icon';
 import { Reveal } from '@/components/site/reveal';
 
@@ -15,13 +16,14 @@ const BASE_METADATA = {
   alternates: { canonical: '/services' },
 };
 
-export default function ServicesIndexPage() {
+export default async function ServicesIndexPage() {
+  const services = await listContent('services');
   return (
     <div className="container mx-auto px-6 pt-28 md:pt-36">
       <Reveal>
         <p className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-primary">Services</p>
         <h1 className="mt-2 font-display text-4xl font-bold tracking-tight md:text-5xl">Everything you need to grow — under one roof.</h1>
-        <p className="mt-3 max-w-2xl text-muted-foreground">Four pillars, sixteen services, one accountable partner. Pick a service to see the full detail, process and pricing.</p>
+        <p className="mt-3 max-w-2xl text-muted-foreground">Four pillars, one accountable partner. Engineering, design, growth and automation for your next chapter.</p>
       </Reveal>
 
       <div className="mt-10 space-y-10 pb-8">
@@ -36,8 +38,8 @@ export default function ServicesIndexPage() {
                 </div>
               </div>
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {getServicesByPillar(p.key).map((s) => (
-                  <Link key={s.slug} href={`/services/${s.slug}`} className="group flex h-full flex-col rounded-2xl border border-border bg-card/50 p-5 transition-all hover:border-primary/40 hover:shadow-xl">
+                {services.filter((s) => s.pillar === p.key).map((s) => (
+                  <Link key={s.slug} data-testid={`service-card-${s.slug}`} href={`/services/${s.slug}`} className="group flex h-full min-w-0 flex-col break-words rounded-2xl border border-border bg-card/50 p-5 transition-all hover:border-primary/40 hover:shadow-xl">
                     <Icon name={s.icon} className="h-6 w-6 text-primary" />
                     <p className="mt-3 font-display font-semibold">{s.name}</p>
                     <p className="mt-1 flex-1 text-sm text-muted-foreground">{s.tagline}</p>

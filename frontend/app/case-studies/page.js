@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { CASE_STUDIES } from '@/lib/data';
+import { listContent } from '@/lib/cms';
 import { Reveal } from '@/components/site/reveal';
 import { Badge } from '@/components/ui/badge';
 
@@ -21,7 +22,8 @@ const IMG = {
   'saas-geo-seo-growth': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxhbmFseXRpY3MlMjBkYXNoYm9hcmR8ZW58MHx8fGJsYWNrfDE3ODc0Mjg5NzF8MA&ixlib=rb-4.1.0&q=85',
 };
 
-export default function CaseStudiesPage() {
+export default async function CaseStudiesPage() {
+  const cases = await listContent('cases');
   return (
     <div className="container mx-auto px-6 pt-32 md:pt-40">
       <Reveal>
@@ -30,11 +32,12 @@ export default function CaseStudiesPage() {
         <p className="mt-3 max-w-2xl text-muted-foreground">Real engagements, real numbers. Here&apos;s how we turned ambitious goals into measurable growth.</p>
       </Reveal>
       <div className="mt-10 grid gap-6 md:grid-cols-3">
-        {CASE_STUDIES.map((c, i) => (
+        {cases.length === 0 && <p data-testid="cases-empty" className="text-muted-foreground">New case studies are on the way.</p>}
+        {cases.map((c, i) => (
           <Reveal key={c.slug} delay={i * 0.08}>
-            <Link href={`/case-studies/${c.slug}`} className="group block overflow-hidden rounded-2xl border border-border bg-card/50 transition-all hover:border-primary/40 hover:shadow-2xl">
+            <Link data-testid={`case-card-${c.slug}`} href={`/case-studies/${c.slug}`} className="group block min-w-0 overflow-hidden break-words rounded-2xl border border-border bg-card/50 transition-all hover:border-primary/40 hover:shadow-2xl">
               <div className="relative aspect-[16/10] overflow-hidden">
-                <img src={IMG[c.slug]} alt={c.title} loading="lazy" className="h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105" />
+                {(c.image || IMG[c.slug]) && <img src={c.image || IMG[c.slug]} alt={c.imageAlt || c.title} loading="lazy" className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105" />}
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
                 <Badge className="absolute left-3 top-3 rounded-full bg-background/70 text-foreground backdrop-blur">{c.industry}</Badge>
               </div>

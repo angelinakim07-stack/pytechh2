@@ -1,48 +1,16 @@
-import { SERVICES, LOCATIONS, CASE_STUDIES, RESOURCES, COMPANY } from '@/lib/data';
-export default function sitemap() {
+import { LOCATIONS, COMPANY } from '@/lib/data';
+import { listContent } from '@/lib/cms';
+export const dynamic = 'force-dynamic';
+export default async function sitemap() {
+  const [services, cases, posts] = await Promise.all(['services', 'cases', 'posts'].map((type) => listContent(type)));
   const base = COMPANY.url.replace(/\/$/, '');
-  const now = new Date();
-
-  const staticUrls = [
-    { path: '', priority: 1, freq: 'weekly' },
-    { path: '/services', priority: 0.9, freq: 'weekly' },
-    { path: '/locations', priority: 0.8, freq: 'weekly' },
-    { path: '/ai-automation', priority: 0.9, freq: 'weekly' },
-    { path: '/case-studies', priority: 0.8, freq: 'weekly' },
-    { path: '/resources', priority: 0.7, freq: 'weekly' },
-    { path: '/support', priority: 0.5, freq: 'monthly' },
-    { path: '/work', priority: 0.7, freq: 'weekly' },
-    { path: '/careers', priority: 0.6, freq: 'weekly' },
-    { path: '/pricing', priority: 0.9, freq: 'weekly' },
-  ].map((s) => ({ url: `${base}${s.path}`, lastModified: now, changeFrequency: s.freq, priority: s.priority }));
-
-  const serviceDetailUrls = SERVICES.map((s) => ({
-    url: `${base}/services/${s.slug}`, lastModified: now, changeFrequency: 'weekly', priority: 0.8,
-  }));
-
-  const locationHubUrls = LOCATIONS.map((l) => ({
-    url: `${base}/locations/${l.slug}`, lastModified: now, changeFrequency: 'weekly', priority: l.hub ? 0.8 : 0.6,
-  }));
-
-  const caseUrls = CASE_STUDIES.map((c) => ({
-    url: `${base}/case-studies/${c.slug}`, lastModified: now, changeFrequency: 'monthly', priority: 0.6,
-  }));
-
-  const resourceUrls = RESOURCES.map((r) => ({
-    url: `${base}/resources/${r.slug}`, lastModified: now, changeFrequency: 'monthly', priority: 0.6,
-  }));
-
-  const serviceLocationUrls = [];
-  for (const s of SERVICES) {
-    for (const l of LOCATIONS) {
-      serviceLocationUrls.push({
-        url: `${base}/services/${s.slug}/${l.slug}`,
-        lastModified: now,
-        changeFrequency: 'weekly',
-        priority: l.hub ? 0.8 : 0.7,
-      });
-    }
-  }
-
-  return [...staticUrls, ...serviceDetailUrls, ...locationHubUrls, ...caseUrls, ...resourceUrls, ...serviceLocationUrls];
+  const entry = (path, item = {}, priority = 0.7) => ({ url: `${base}${path}`, ...(item.updatedAt ? { lastModified: new Date(item.updatedAt) } : {}), changeFrequency: 'weekly', priority });
+  return [
+    ...['', '/services', '/locations', '/ai-automation', '/case-studies', '/blog', '/support', '/work', '/careers', '/pricing'].map((p) => entry(p, {}, p ? 0.8 : 1)),
+    ...services.map((s) => entry(`/services/${s.slug}`, s)),
+    ...LOCATIONS.map((l) => entry(`/locations/${l.slug}`)),
+    ...cases.map((c) => entry(`/case-studies/${c.slug}`, c)),
+    ...posts.map((p) => entry(`/blog/${p.slug}`, p)),
+    ...services.flatMap((s) => LOCATIONS.map((l) => entry(`/services/${s.slug}/${l.slug}`, s))),
+  ];
 }

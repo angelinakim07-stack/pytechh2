@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, Check, MapPin, Sparkles } from 'lucide-react';
-import { getService, buildServiceFaqs, getServicesByPillar, getPillar, PROCESS, LOCATIONS, SERVICES, COMPANY } from '@/lib/data';
+import { buildServiceFaqs, getPillar, PROCESS, COMPANY } from '@/lib/data';
+import { getContent, listContent } from '@/lib/cms';
+import { pageMetadata } from '@/lib/seo';
+import { ServiceWork } from '@/components/site/service-work';
 import { Icon } from '@/components/site/icon';
 import { Reveal } from '@/components/site/reveal';
 import { ServiceExtras } from '@/components/site/service-extras';
@@ -18,27 +21,25 @@ const PILLAR_IMG = {
   automate: 'https://images.unsplash.com/photo-1716436329475-4c55d05383bb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwyfHxBSSUyMHRlY2hub2xvZ3l8ZW58MHx8fGJsYWNrfDE3ODc0Mjg5ODJ8MA&ixlib=rb-4.1.0&q=85',
 };
 
-export function generateStaticParams() {
-  return SERVICES.map((s) => ({ service: s.slug }));
-}
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }) {
   const { service: slug } = await params;
-  const service = getService(slug);
+  const service = await getContent('services', slug);
   if (!service) return { title: 'Service not found' };
-  const title = `${service.name} Services`;
-  const description = `${service.tagline} ${service.summary}`;
-  return { title, description, alternates: { canonical: `${COMPANY.url}/services/${slug}` }, openGraph: { title, description } };
+  const title = service.seoTitle || `${service.name} Services`;
+  const description = service.seoDescription || `${service.tagline} ${service.summary}`;
+  return pageMetadata(`/services/${slug}`, { title, description, keywords: service.keywords, alternates: { canonical: `${COMPANY.url}/services/${slug}` }, openGraph: { title, description } });
 }
 
 export default async function ServiceDetailPage({ params }) {
   const { service: slug } = await params;
-  const service = getService(slug);
+  const service = await getContent('services', slug);
   if (!service) notFound();
   const pillar = getPillar(service.pillar);
   const faqs = buildServiceFaqs(service);
   const steps = PROCESS[service.pillar] || [];
-  const related = getServicesByPillar(service.pillar).filter((s) => s.slug !== slug);
+  const related = (await listContent('services')).filter((s) => s.pillar === service.pillar && s.slug !== slug);
 
   const serviceSchema = {
     '@context': 'https://schema.org', '@type': 'Service', name: service.name, serviceType: service.name,
@@ -53,10 +54,10 @@ export default async function ServiceDetailPage({ params }) {
   ] };
 
   return (
-    <article className="relative">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+    <article className="relative [overflow-wrap:anywhere]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema).replace(/</g, '\\u003c') }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema).replace(/</g, '\\u003c') }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema).replace(/</g, '\\u003c') }} />
 
       {/* Hero */}
       <section className="relative overflow-hidden pt-28 md:pt-36">
@@ -72,7 +73,7 @@ export default async function ServiceDetailPage({ params }) {
             <Badge variant="outline" className="mb-4 gap-1.5 rounded-full border-primary/30 bg-primary/5" style={{ color: pillar?.accent }}>
               <Icon name={service.icon} className="h-3.5 w-3.5" /> {pillar?.label}
             </Badge>
-            <h1 className="font-display text-3xl font-bold leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">{service.name}</h1>
+            <h1 data-testid="service-title" className="font-display text-3xl font-bold leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">{service.name}</h1>
             <p className="mt-4 max-w-xl text-base text-muted-foreground md:text-lg">{service.tagline} {service.summary}</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Button asChild size="lg" className="rounded-full glow-brand"><Link href="#lead">Get a free quote <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
@@ -81,7 +82,7 @@ export default async function ServiceDetailPage({ params }) {
           </div>
           <div className="relative hidden lg:block">
             <div className="overflow-hidden rounded-2xl border border-border">
-              <img src={PILLAR_IMG[service.pillar]} alt={service.name} className="h-[320px] w-full object-cover opacity-85" />
+              <img data-testid="service-image" src={service.image || PILLAR_IMG[service.pillar]} alt={service.imageAlt || service.name} className="aspect-[16/10] w-full object-contain" />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/60 to-transparent" />
             </div>
           </div>
@@ -178,6 +179,7 @@ export default async function ServiceDetailPage({ params }) {
         </div>
       </section>
 
+      <ServiceWork service={service} />
       {/* Lead form */}
       <section id="lead" className="container mx-auto scroll-mt-24 px-6 py-12">
         <div className="grid gap-10 lg:grid-cols-2">

@@ -17,7 +17,7 @@ export const SEO_PAGES = [
 export async function getSeoOverride(path) {
   try {
     const db = await getDb();
-    return await db.collection('seo').findOne({ path });
+    return await db.collection('seo').findOne({ path }, { projection: { _id: 0 } });
   } catch (e) {
     return null;
   }
