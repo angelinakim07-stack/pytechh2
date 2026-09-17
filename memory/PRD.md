@@ -57,3 +57,17 @@ Added on top of the migrated Next.js app:
 
 ## Action item for the user
 - To activate application emails: Admin → **Email** tab → enter sender Gmail (`rajeev.pytech@gmail.com`), a Gmail **App Password**, recipient, toggle **Send application emails** ON, Save. Until then, applications + resumes are still saved in Admin → Applications.
+
+## Update — What we do, admin Offerings, Pricing page (2026-06)
+User ask: homepage must instantly say what the company does; 6 offerings admin-managed; new Pricing page with INR + USD.
+- **New API** `/api/offerings` (public GET, seeds 6 defaults from `lib/data.js` → `DEFAULT_OFFERINGS` on first read; admin POST/PUT/DELETE via `x-admin-key`). Fields: title, slug, icon, serviceSlug, blurb, points[], image, priceInr, priceUsd, priceUnit (project|month), priceNote, featured, order.
+- **Homepage**: new `components/site/what-we-do.js` ("What we actually do" — 6 image cards: App Development, Website Development, ERP & Custom Software, AI & Automation, Digital Marketing, Branding & Design) placed after the 4 pillars; plus a bottom `#pricing` teaser using `components/site/pricing-table.js` (compact).
+- **New `/pricing` page** (`app/pricing/page.js`): INR/USD toggle, 6 price cards, pricing FAQ + FAQPage/Service JSON-LD. Linked in navbar, mobile menu, footer and sitemap.
+- **Seeded starting prices**: Website ₹20,000 / $250 · App ₹99,999 / $1,999 (user-given). Placeholder defaults (editable in Admin): ERP ₹1,49,999/$2,499 · AI automation ₹49,999/$799 · Digital marketing ₹24,999/$399 per month · Branding ₹29,999/$499.
+- **Admin**: new **Offerings & Pricing** tab (full CRUD incl. both currencies, icon, bullets, image, homepage visibility). Existing 16 SEO service pages kept as-is (user choice).
+- Tested: iteration_3.json — backend 5/5, all frontend flows (desktop + 390px mobile, no overflow) pass.
+
+## Backlog / next
+- P1: Replace placeholder prices for ERP / AI / Marketing / Branding with the real numbers (Admin → Offerings & Pricing).
+- P1: Activate careers email (Admin → Email tab, Gmail App Password).
+- P2: Self-host offering images instead of Unsplash URLs; split `route.js` per resource.

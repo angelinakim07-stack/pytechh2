@@ -1,0 +1,24 @@
+{
+  "summary": "Full E2E of PyTech Digital new Offerings/Pricing features via external preview URL. Backend: 5/5 pytest cases pass — GET /api/offerings returns exactly 6 seeded offerings with correct slugs (app-development, web-development, erp-software, ai-automation, digital-marketing, branding) and prices (web ₹20000/$250, app ₹99999/$1999); seeding is idempotent; POST/DELETE unauthorized returns 401; admin CRUD (POST -> PUT priceInr=222 & featured=false -> DELETE) verified via subsequent GETs; final state = 6 defaults. Regression smoke on /, /services, /services/web-development, /work, /careers, /admin, /pricing, /sitemap.xml all 200; /sitemap.xml contains /pricing. Frontend (Desktop 1920): homepage renders [data-testid=what-we-do-section] with all 6 [data-testid=offering-card-<slug>], images load; [data-testid=what-we-do-pricing-link] -> /pricing; homepage bottom teaser [data-testid=pricing-see-all] present; [data-testid=nav-pricing] navigates to /pricing which shows heading, cards, [currency-inr]/[currency-usd] toggle (₹20,000 -> $250 confirmed), 7 FAQ toggles, 9 /#contact quote links; [data-testid=footer-pricing] present. Admin (pytech-admin-2026) [data-testid=tab-offerings] lists 6 Edit rows; clicking Edit reveals offering-title/blurb/inr/usd inputs + offering-save; edited first offering blurb to append '[TEST_EDIT]' -> 'Offering updated' toast -> confirmed via public GET -> reverted successfully. Mobile (390x844): burger opens menu, [data-testid=mobile-nav-pricing] visible and navigates to /pricing; no horizontal overflow (0px); cards readable.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_offerings.py",
+    "/app/test_reports/pytest/offerings.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Offerings PUT/DELETE do not verify matchedCount — returns ok:true even if id doesn't exist. Consider returning 404 on no-match to help clients detect stale data.",
+    "route.js is now ~450 lines with 5 CRUD resources; splitting per-resource handlers into modules would improve maintainability (same note as iteration_2).",
+    "DEFAULT_OFFERINGS seed only runs when collection is empty — if a future admin deletes an offering, that specific default won't be re-added. This is intentional per admin-managed design, but should be documented.",
+    "OfferingsManager Edit button lacks a data-testid — currently discovered via text('Edit'); consider adding data-testid='offering-edit-<slug>' for stronger test selectors.",
+    "Unsplash image URLs are hardcoded in DEFAULT_OFFERINGS; they load fine now but consider self-hosting or caching to avoid 3rd-party availability risk."
+  ],
+  "updated_files": ["/app/backend/tests/test_offerings.py"],
+  "success_rate": {"backend": "100% (5/5)", "frontend": "100% (all critical flows)"},
+  "test_credentials": "Admin password: pytech-admin-2026 (per /app/memory/test_credentials.md)",
+  "seed_data_creation": "Created + deleted TEST_Offering via admin API; admin UI edit of app-development blurb ('[TEST_EDIT]') was reverted at end of test. Final DB state: exactly the 6 default offerings, unchanged.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Offerings endpoint: GET seeds from lib/data.js DEFAULT_OFFERINGS only when collection is empty. Admin write requires header x-admin-key: pytech-admin-2026 OR ?key=. DELETE uses ?id=<uuid>. Admin UI: click 'Edit' on row FIRST to reveal offering-title/blurb/inr/usd/save data-testids (they are inside the expanded edit panel, not always in DOM). Pricing page currency toggle: [data-testid=currency-inr] / [data-testid=currency-usd]. Mobile menu: click last header button to open, then [data-testid=mobile-nav-pricing]."
+}

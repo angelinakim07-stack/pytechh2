@@ -506,7 +506,7 @@ function OfferingsManager({ adminKey, offerings, reload }) {
                   <span className="text-xs text-muted-foreground"> /{o.priceUnit === 'month' ? 'mo' : 'project'}</span>
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" className="rounded-full" onClick={() => edit(o)}>Edit</Button>
+                  <Button size="sm" variant="outline" data-testid={`offering-edit-${o.slug || o.id}`} className="rounded-full" onClick={() => edit(o)}>Edit</Button>
                   <Button size="sm" variant="ghost" className="rounded-full text-destructive hover:text-destructive" onClick={() => remove(o.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
