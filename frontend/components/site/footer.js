@@ -20,6 +20,9 @@ export function Footer() {
             </div>
             <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm">
               <Link href="/services" className="text-muted-foreground transition-colors hover:text-foreground">Services</Link>
+              <Link href="/pricing" data-testid="footer-pricing" className="text-muted-foreground transition-colors hover:text-foreground">Pricing</Link>
+              <Link href="/work" className="text-muted-foreground transition-colors hover:text-foreground">Our Work</Link>
+              <Link href="/careers" className="text-muted-foreground transition-colors hover:text-foreground">Careers</Link>
               <Link href="/resources" className="text-muted-foreground transition-colors hover:text-foreground">Learning Hub</Link>
               <Link href="/support" className="text-muted-foreground transition-colors hover:text-foreground">Support</Link>
               <Link href="/locations" className="text-muted-foreground transition-colors hover:text-foreground">Locations</Link>

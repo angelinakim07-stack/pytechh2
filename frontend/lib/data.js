@@ -534,3 +534,49 @@ export const JOBS = [
 
 export const getJob = (slug) => JOBS.find((j) => j.slug === slug) || null;
 export const getJobsByDepartment = (dept) => JOBS.filter((j) => j.department === dept);
+
+// ---- Offerings (admin-managed on top of these defaults; power the homepage "What we do" + /pricing) ----
+export const DEFAULT_OFFERINGS = [
+  {
+    slug: 'app-development', title: 'App Development', icon: 'Smartphone', serviceSlug: 'mobile-apps',
+    blurb: 'Native & cross-platform iOS/Android apps that feel fast and ship on time.',
+    points: ['iOS, Android & React Native', 'Payments, chat, maps, push', 'App Store & Play launch support'],
+    image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200',
+    priceInr: 99999, priceUsd: 1999, priceUnit: 'project', order: 1, featured: true,
+  },
+  {
+    slug: 'web-development', title: 'Website Development', icon: 'Globe', serviceSlug: 'web-development',
+    blurb: 'Blazing-fast, SEO-ready websites and web apps built on Next.js.',
+    points: ['Business sites, e-commerce & portals', 'Sub-second load, 90+ Lighthouse', 'CMS so your team can edit'],
+    image: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200',
+    priceInr: 20000, priceUsd: 250, priceUnit: 'project', order: 2, featured: true,
+  },
+  {
+    slug: 'erp-software', title: 'ERP & Custom Software', icon: 'Server', serviceSlug: 'custom-software',
+    blurb: 'ERP, CRM and internal tools that replace spreadsheets and run your operations.',
+    points: ['Inventory, billing, HR & CRM modules', 'Role-based dashboards & reports', 'API integrations with your stack'],
+    image: 'https://images.unsplash.com/photo-1608222351212-18fe0ec7b13b?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200',
+    priceInr: 149999, priceUsd: 2499, priceUnit: 'project', order: 3, featured: true,
+  },
+  {
+    slug: 'ai-automation', title: 'AI & Automation', icon: 'Bot', serviceSlug: 'workflow-ai',
+    blurb: 'AI agents, WhatsApp/voice bots and workflow automation that cut manual work.',
+    points: ['WhatsApp API & AI chat agents', 'Voice calling & SMS automation', 'Workflow automation across tools'],
+    image: 'https://images.unsplash.com/photo-1737644467636-6b0053476bb2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200',
+    priceInr: 49999, priceUsd: 799, priceUnit: 'project', order: 4, featured: true,
+  },
+  {
+    slug: 'digital-marketing', title: 'Digital Marketing', icon: 'Megaphone', serviceSlug: 'digital-marketing',
+    blurb: 'Performance ads, SEO and AI/GEO so the right buyers actually find you.',
+    points: ['Google & Meta performance ads', 'Deep SEO, AI SEO & GEO', 'Weekly reporting on revenue'],
+    image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200',
+    priceInr: 24999, priceUsd: 399, priceUnit: 'month', order: 5, featured: true,
+  },
+  {
+    slug: 'branding', title: 'Branding & Design', icon: 'Palette', serviceSlug: 'corporate-identity',
+    blurb: 'Identity, 3D logos, UI/UX and packaging that make you look like the leader.',
+    points: ['Logo, identity & brand guidelines', '3D logos & motion', 'UI/UX, print & packaging'],
+    image: 'https://images.unsplash.com/photo-1781615851923-2f1e05d7abfa?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200',
+    priceInr: 29999, priceUsd: 499, priceUnit: 'project', order: 6, featured: true,
+  },
+];

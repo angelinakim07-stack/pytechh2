@@ -2,7 +2,7 @@ import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NextResponse } from 'next/server'
 import { LlmChat, UserMessage } from 'emergentintegrations'
-import { SERVICES, LOCATIONS, JOBS, getJob } from '@/lib/data'
+import { SERVICES, LOCATIONS, JOBS, getJob, DEFAULT_OFFERINGS } from '@/lib/data'
 import { putObject, getObject, APP_NAME } from '@/lib/storage'
 import { sendApplicationEmail } from '@/lib/mailer'
 
@@ -261,6 +261,62 @@ async function handleRoute(request, { params }) {
       const id = request.nextUrl.searchParams.get('id')
       if (!id) return handleCORS(NextResponse.json({ error: 'id is required' }, { status: 400 }))
       await db.collection('projects').deleteOne({ id })
+      return handleCORS(NextResponse.json({ ok: true }))
+    }
+
+    // ---- Offerings (public read w/ first-run seed, admin write) ----
+    if (route === '/offerings' && method === 'GET') {
+      const col = db.collection('offerings')
+      if (await col.countDocuments({}) === 0) {
+        await col.insertMany(DEFAULT_OFFERINGS.map((o) => ({ id: uuidv4(), ...o, createdAt: new Date() })))
+      }
+      const offerings = await col.find({}).sort({ order: 1 }).toArray()
+      return handleCORS(NextResponse.json({ offerings: offerings.map(({ _id, ...rest }) => rest) }))
+    }
+    if (route === '/offerings' && method === 'POST') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const b = await request.json()
+      if (!b.title) return handleCORS(NextResponse.json({ error: 'title is required' }, { status: 400 }))
+      const offering = {
+        id: uuidv4(),
+        title: b.title,
+        slug: b.slug || String(b.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+        icon: b.icon || 'Sparkles',
+        serviceSlug: b.serviceSlug || '',
+        blurb: b.blurb || '',
+        points: Array.isArray(b.points) ? b.points : String(b.points || '').split('\n').map((p) => p.trim()).filter(Boolean),
+        image: b.image || '',
+        priceInr: b.priceInr === '' || b.priceInr == null ? null : Number(b.priceInr),
+        priceUsd: b.priceUsd === '' || b.priceUsd == null ? null : Number(b.priceUsd),
+        priceUnit: b.priceUnit || 'project',
+        priceNote: b.priceNote || '',
+        featured: b.featured !== false,
+        order: Number(b.order) || 99,
+        createdAt: new Date(),
+      }
+      await db.collection('offerings').insertOne(offering)
+      const { _id, ...clean } = offering
+      return handleCORS(NextResponse.json({ ok: true, offering: clean }))
+    }
+    if (route === '/offerings' && method === 'PUT') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const b = await request.json()
+      if (!b.id) return handleCORS(NextResponse.json({ error: 'id is required' }, { status: 400 }))
+      const set = {}
+      for (const f of ['title', 'slug', 'icon', 'serviceSlug', 'blurb', 'image', 'priceUnit', 'priceNote']) if (f in b) set[f] = b[f]
+      for (const f of ['priceInr', 'priceUsd']) if (f in b) set[f] = b[f] === '' || b[f] == null ? null : Number(b[f])
+      if ('points' in b) set.points = Array.isArray(b.points) ? b.points : String(b.points || '').split('\n').map((p) => p.trim()).filter(Boolean)
+      if ('featured' in b) set.featured = !!b.featured
+      if ('order' in b) set.order = Number(b.order) || 99
+      set.updatedAt = new Date()
+      await db.collection('offerings').updateOne({ id: b.id }, { $set: set })
+      return handleCORS(NextResponse.json({ ok: true }))
+    }
+    if (route === '/offerings' && method === 'DELETE') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const id = request.nextUrl.searchParams.get('id')
+      if (!id) return handleCORS(NextResponse.json({ error: 'id is required' }, { status: 400 }))
+      await db.collection('offerings').deleteOne({ id })
       return handleCORS(NextResponse.json({ ok: true }))
     }
 

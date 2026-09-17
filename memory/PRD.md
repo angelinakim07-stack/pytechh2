@@ -44,3 +44,16 @@ This pod is a **fastapi_react_mongo** base image, but the app is Next.js. Ingres
 - P2: For production Emergent deploy, prefer a native Next.js target (build+`next start`) rather than
   the preview proxy; set real `CORS_ORIGINS`, strong `ADMIN_PASSWORD`, GA/GSC env if desired.
 - P2: Point `COMPANY.url` / metadataBase to the real production domain before go-live.
+
+## Update — Careers, Projects, Work, Email settings, logo (2026-06)
+Added on top of the migrated Next.js app:
+- **Careers** (`/careers`, in top nav): 9 roles (BDE, BDM, HR, Frontend, Full-Stack, iOS, Android, SEO Specialist, Social Media Manager) grouped by department + application dialog. `POST /api/careers/apply` (multipart) stores the resume in Emergent **object storage** and saves the application; sends a Gmail-SMTP email with the resume attached IF admin email settings are enabled.
+- **Admin** now has 5 tabs: Chats, Leads, **Projects** (full CRUD → `/api/projects`), **Applications** (list + resume download via `/api/files/<path>?key=`), **Email** settings (`/api/settings/email`, Gmail App Password entered here, never hardcoded).
+- **Our Work** public page (`/work`, in top nav) + homepage "Recently shipped" section render admin-managed projects (featured on homepage).
+- Service detail pages: replaced the full ~90-location wall with compact pills + **Load more** (`components/site/service-cities.js`).
+- Navbar logo now stacks "Digital" under "PyTech.".
+- New libs: `lib/storage.js` (object storage, Node), `lib/mailer.js` (nodemailer Gmail SMTP). `nodemailer` added to package.json.
+- Tested: 18/18 backend pytest + full frontend E2E (iteration_2.json), all pass.
+
+## Action item for the user
+- To activate application emails: Admin → **Email** tab → enter sender Gmail (`rajeev.pytech@gmail.com`), a Gmail **App Password**, recipient, toggle **Send application emails** ON, Save. Until then, applications + resumes are still saved in Admin → Applications.

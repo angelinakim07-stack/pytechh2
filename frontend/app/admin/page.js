@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   Search, Users, MessagesSquare, RefreshCw, Mail, Phone, Building2, Clock, Bot, User, Lock, LogOut, Flame,
-  FolderGit2, FileText, Settings2, Download, Plus, Trash2, Star, Save, Send, ExternalLink, Briefcase,
+  FolderGit2, FileText, Settings2, Download, Plus, Trash2, Star, Save, Send, ExternalLink, Briefcase, Tags,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -31,6 +31,7 @@ function TierBadge({ tier }) {
 }
 
 const EMPTY_PROJECT = { id: '', name: '', url: '', client: '', category: '', deliveryTime: '', challenges: '', description: '', tech: '', image: '', featured: false };
+const EMPTY_OFFERING = { id: '', title: '', slug: '', icon: 'Sparkles', serviceSlug: '', blurb: '', points: '', image: '', priceInr: '', priceUsd: '', priceUnit: 'project', priceNote: '', order: 99, featured: true };
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
@@ -42,6 +43,7 @@ export default function AdminPage() {
   const [sessions, setSessions] = useState([]);
   const [projects, setProjects] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [offerings, setOfferings] = useState([]);
   const [q, setQ] = useState('');
   const [tierFilter, setTierFilter] = useState('all');
   const [loading, setLoading] = useState(false);
@@ -66,28 +68,31 @@ export default function AdminPage() {
 
   function logout() {
     window.localStorage.removeItem(KEY_STORE);
-    setKey(''); setAuthed(false); setPwd(''); setLeads([]); setSessions([]); setProjects([]); setApplications([]);
+    setKey(''); setAuthed(false); setPwd(''); setLeads([]); setSessions([]); setProjects([]); setApplications([]); setOfferings([]);
   }
 
   async function load(k) {
     setLoading(true);
     try {
       const h = { 'x-admin-key': k };
-      const [lr, sr, pr, ar] = await Promise.all([
+      const [lr, sr, pr, ar, or_] = await Promise.all([
         fetch('/api/leads', { headers: h }),
         fetch('/api/chat/sessions', { headers: h }),
         fetch('/api/projects'),
         fetch('/api/careers/applications', { headers: h }),
+        fetch('/api/offerings'),
       ]);
       if (lr.status === 401 || sr.status === 401) { logout(); return; }
       const l = await lr.json();
       const s = await sr.json();
       const p = await pr.json();
       const a = await ar.json();
+      const o = await or_.json();
       setLeads(Array.isArray(l) ? l : []);
       setSessions(s?.sessions || []);
       setProjects(Array.isArray(p?.projects) ? p.projects : []);
       setApplications(Array.isArray(a) ? a : []);
+      setOfferings(Array.isArray(o?.offerings) ? o.offerings : []);
     } catch (e) { /* noop */ }
     setLoading(false);
   }
@@ -156,6 +161,7 @@ export default function AdminPage() {
           <TabsTrigger value="chats" className="rounded-full gap-2"><MessagesSquare className="h-4 w-4" /> Chats <Badge variant="secondary" className="ml-1 rounded-full">{sessions.length}</Badge></TabsTrigger>
           <TabsTrigger value="leads" className="rounded-full gap-2"><Users className="h-4 w-4" /> Leads <Badge variant="secondary" className="ml-1 rounded-full">{leads.length}</Badge></TabsTrigger>
           <TabsTrigger value="projects" className="rounded-full gap-2"><FolderGit2 className="h-4 w-4" /> Projects <Badge variant="secondary" className="ml-1 rounded-full">{projects.length}</Badge></TabsTrigger>
+          <TabsTrigger value="offerings" data-testid="tab-offerings" className="rounded-full gap-2"><Tags className="h-4 w-4" /> Offerings &amp; Pricing <Badge variant="secondary" className="ml-1 rounded-full">{offerings.length}</Badge></TabsTrigger>
           <TabsTrigger value="applications" className="rounded-full gap-2"><Briefcase className="h-4 w-4" /> Applications <Badge variant="secondary" className="ml-1 rounded-full">{applications.length}</Badge></TabsTrigger>
           <TabsTrigger value="settings" className="rounded-full gap-2"><Settings2 className="h-4 w-4" /> Email</TabsTrigger>
         </TabsList>
@@ -242,6 +248,11 @@ export default function AdminPage() {
         {/* PROJECTS */}
         <TabsContent value="projects" className="mt-6">
           <ProjectsManager adminKey={key} projects={projects} reload={() => load(key)} />
+        </TabsContent>
+
+        {/* OFFERINGS & PRICING */}
+        <TabsContent value="offerings" className="mt-6">
+          <OfferingsManager adminKey={key} offerings={offerings} reload={() => load(key)} />
         </TabsContent>
 
         {/* APPLICATIONS */}
@@ -381,6 +392,122 @@ function ProjectsManager({ adminKey, projects, reload }) {
                   <Button size="sm" variant="outline" className="rounded-full" onClick={() => edit(p)}>Edit</Button>
                   <Button size="sm" variant="ghost" className="rounded-full" onClick={() => toggleFeatured(p)}>{p.featured ? 'Unfeature' : 'Feature'}</Button>
                   <Button size="sm" variant="ghost" className="rounded-full text-destructive hover:text-destructive" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OfferingsManager({ adminKey, offerings, reload }) {
+  const [form, setForm] = useState(EMPTY_OFFERING);
+  const [saving, setSaving] = useState(false);
+  const editing = !!form.id;
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  async function save(e) {
+    e.preventDefault();
+    if (!form.title.trim()) { toast.error('Title is required'); return; }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/offerings', {
+        method: editing ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error('failed');
+      toast.success(editing ? 'Offering updated' : 'Offering added');
+      setForm(EMPTY_OFFERING);
+      reload();
+    } catch { toast.error('Could not save offering'); }
+    finally { setSaving(false); }
+  }
+
+  async function remove(id) {
+    if (!window.confirm('Delete this offering? It will disappear from the homepage and pricing page.')) return;
+    try {
+      const res = await fetch(`/api/offerings?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-admin-key': adminKey } });
+      if (!res.ok) throw new Error('failed');
+      toast.success('Offering deleted');
+      reload();
+    } catch { toast.error('Could not delete'); }
+  }
+
+  function edit(o) {
+    setForm({ ...EMPTY_OFFERING, ...o, points: Array.isArray(o.points) ? o.points.join('\n') : (o.points || ''), priceInr: o.priceInr ?? '', priceUsd: o.priceUsd ?? '' });
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const inp = 'mt-1.5';
+  return (
+    <div className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={save} className="h-fit rounded-2xl border border-border bg-card/50 p-5 lg:col-span-2">
+        <p className="font-display text-lg font-semibold">{editing ? 'Edit offering' : 'Add an offering'}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Powers the homepage “What we actually do” section and the Pricing page.</p>
+        <div className="mt-4 space-y-3">
+          <div><Label htmlFor="o-title">Title *</Label><Input id="o-title" data-testid="offering-title" value={form.title} onChange={set('title')} className={inp} placeholder="Website Development" /></div>
+          <div><Label htmlFor="o-blurb">One-line blurb</Label><Textarea id="o-blurb" data-testid="offering-blurb" value={form.blurb} onChange={set('blurb')} className={inp} rows={2} placeholder="Blazing-fast, SEO-ready websites built on Next.js." /></div>
+          <div><Label htmlFor="o-points">Bullet points (one per line)</Label><Textarea id="o-points" data-testid="offering-points" value={form.points} onChange={set('points')} className={inp} rows={3} placeholder={'Business sites & e-commerce\nSub-second load\nCMS for your team'} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label htmlFor="o-inr">Starting price (₹ INR)</Label><Input id="o-inr" data-testid="offering-inr" value={form.priceInr} onChange={set('priceInr')} className={inp} placeholder="20000" /></div>
+            <div><Label htmlFor="o-usd">Starting price ($ USD)</Label><Input id="o-usd" data-testid="offering-usd" value={form.priceUsd} onChange={set('priceUsd')} className={inp} placeholder="250" /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="o-unit">Price unit</Label>
+              <select id="o-unit" value={form.priceUnit} onChange={set('priceUnit')} className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                <option value="project">per project</option>
+                <option value="month">per month</option>
+              </select>
+            </div>
+            <div><Label htmlFor="o-order">Display order</Label><Input id="o-order" value={form.order} onChange={set('order')} className={inp} placeholder="1" /></div>
+          </div>
+          <div><Label htmlFor="o-note">Price note (optional)</Label><Input id="o-note" value={form.priceNote} onChange={set('priceNote')} className={inp} placeholder="Scope-based, quoted in writing" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label htmlFor="o-icon">Icon</Label>
+              <select id="o-icon" value={form.icon} onChange={set('icon')} className="mt-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                {['Smartphone', 'Globe', 'Server', 'Bot', 'Megaphone', 'Palette', 'Code2', 'Sparkles', 'Workflow', 'Search', 'PenTool', 'Package'].map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+            <div><Label htmlFor="o-service">Links to service slug</Label><Input id="o-service" value={form.serviceSlug} onChange={set('serviceSlug')} className={inp} placeholder="web-development" /></div>
+          </div>
+          <div><Label htmlFor="o-image">Image URL</Label><Input id="o-image" value={form.image} onChange={set('image')} className={inp} placeholder="https://…" /></div>
+          <label className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-background/50 px-3 py-2">
+            <span className="flex items-center gap-2 text-sm"><Star className="h-4 w-4 text-primary" /> Show on homepage</span>
+            <Switch checked={form.featured} onCheckedChange={(v) => setForm((f) => ({ ...f, featured: v }))} />
+          </label>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Button type="submit" data-testid="offering-save" disabled={saving} className="flex-1 rounded-full glow-brand">
+            {saving ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {editing ? 'Update' : 'Add offering'}
+          </Button>
+          {editing && <Button type="button" variant="outline" className="rounded-full" onClick={() => setForm(EMPTY_OFFERING)}>Cancel</Button>}
+        </div>
+      </form>
+
+      <div className="lg:col-span-3">
+        {offerings.length === 0 ? (
+          <Empty label="No offerings yet — open the public Pricing page once and the six defaults get seeded, then edit them here." />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {offerings.map((o) => (
+              <div key={o.id} data-testid={`admin-offering-${o.slug || o.id}`} className="flex flex-col rounded-2xl border border-border bg-card/50 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-display font-semibold">{o.title}</p>
+                  {o.featured !== false && <Star className="h-4 w-4 flex-none fill-primary text-primary" />}
+                </div>
+                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{o.blurb}</p>
+                <p className="mt-2 text-sm">
+                  {o.priceInr ? <span className="font-medium">₹{Number(o.priceInr).toLocaleString('en-IN')}</span> : <span className="text-muted-foreground">Custom</span>}
+                  {o.priceUsd ? <span className="text-muted-foreground"> · ${Number(o.priceUsd).toLocaleString('en-US')}</span> : null}
+                  <span className="text-xs text-muted-foreground"> /{o.priceUnit === 'month' ? 'mo' : 'project'}</span>
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" className="rounded-full" onClick={() => edit(o)}>Edit</Button>
+                  <Button size="sm" variant="ghost" className="rounded-full text-destructive hover:text-destructive" onClick={() => remove(o.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
             ))}

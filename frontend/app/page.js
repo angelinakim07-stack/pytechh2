@@ -12,6 +12,8 @@ import { ClientTicker } from '@/components/site/client-ticker';
 import { RoiCalculator } from '@/components/site/roi-calculator';
 import { LeadForm } from '@/components/site/lead-form';
 import { FeaturedWork } from '@/components/site/featured-work';
+import { WhatWeDo } from '@/components/site/what-we-do';
+import { PricingTable } from '@/components/site/pricing-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -133,6 +135,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== WHAT WE DO (admin-managed offerings) ===== */}
+      <WhatWeDo />
+
       {/* ===== CASE STUDIES ===== */}
       <section className="container mx-auto px-6 py-8 md:py-16">
         <Reveal>
@@ -224,6 +229,16 @@ export default function HomePage() {
             </Accordion>
           </div>
         </div>
+      </section>
+
+      {/* ===== PRICING TEASER ===== */}
+      <section id="pricing" className="container mx-auto scroll-mt-24 px-6 py-16 md:py-24">
+        <Reveal>
+          <p className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-primary">Pricing</p>
+          <h2 className="mt-2 font-display text-3xl font-bold tracking-tight md:text-4xl">Starting prices, stated upfront.</h2>
+          <p className="mt-3 max-w-2xl text-muted-foreground">Websites from ₹20,000. Apps from ₹99,999. Fixed scope, quoted in writing — in INR or USD.</p>
+        </Reveal>
+        <div className="mt-10"><PricingTable compact /></div>
       </section>
 
       {/* ===== CONTACT / LEAD FORM ===== */}

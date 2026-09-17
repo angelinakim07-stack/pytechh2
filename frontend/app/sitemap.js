@@ -13,6 +13,7 @@ export default function sitemap() {
     { path: '/support', priority: 0.5, freq: 'monthly' },
     { path: '/work', priority: 0.7, freq: 'weekly' },
     { path: '/careers', priority: 0.6, freq: 'weekly' },
+    { path: '/pricing', priority: 0.9, freq: 'weekly' },
   ].map((s) => ({ url: `${base}${s.path}`, lastModified: now, changeFrequency: s.freq, priority: s.priority }));
 
   const serviceDetailUrls = SERVICES.map((s) => ({

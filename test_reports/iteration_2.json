@@ -1,0 +1,35 @@
+{
+  "summary": "Full E2E of PyTech Digital new features (Careers, Admin Projects CRUD, Public Work page, Admin Email Settings, service 'Load more locations', new nav links) via external preview URL. Backend: 18/18 pytest cases pass (11 regression + 7 new). Frontend: all new flows verified via Playwright — Careers page renders hero+perks+9 role cards grouped by dept (Sales/People/Engineering/Marketing), apply dialog opens, PDF upload + form submit shows 'Application received' toast, application appears in Admin → Applications with working /api/files/... resume download link. Admin login (pytech-admin-2026) unlocks 5-tab dashboard (Chats/Leads/Projects/Applications/Email). Project CREATE via UI shows 'Project added' toast, appears on public /work and in homepage 'Recently shipped' when featured=true; EDIT shows 'Project updated' toast and change reflects immediately; DELETE via API confirmed (icon-only delete button in UI). Public /work shows real projects (no empty state when populated). Email Settings tab loads current cfg, PUT saves (GET returns hasPassword=true, enabled reflects toggle), 'Email settings saved' toast; applications continue to save with enabled=false. Service page /services/web-development shows compact 16 location pills + 'Load more locations (44)' button — clicking expands to 46 pills. Navbar shows Work + Careers on desktop and navigates correctly. Regression flows (homepage globe, lead form, Ada chatbot, admin Leads/Conversations tabs) all continue to work.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_new_features.py",
+    "/app/test_reports/pytest/all_tests.xml",
+    "/app/test_reports/pytest/new_features.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "app/api/[[...path]]/route.js is nearing ~400 lines with many route branches — consider splitting each domain (projects/careers/settings/files) into helper modules for maintainability.",
+    "Admin resume download URL embeds the admin password as ?key=... in a plain href — acceptable for internal use, but rotating the password invalidates any bookmarked/emailed links; consider short-lived signed URLs.",
+    "Delete project button is an icon-only Trash2 without a data-testid or accessible name (uses aria implicitly from icon); adding data-testid='project-delete-<id>' and an aria-label='Delete project' would improve testability + a11y.",
+    "PUT /api/projects updates by id in body but there is no explicit validation that the id exists (returns ok even if no doc matched); consider returning 404 on zero-matched updates.",
+    "Email settings PUT accepts port as number but stores raw pass — good that GET redacts it; ensure Mongo backups strip 'settings.email.pass' if exported."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_new_features.py"
+  ],
+  "success_rate": {"backend": "100% (18/18)", "frontend": "100% (all critical flows)"},
+  "test_credentials": "Admin password: pytech-admin-2026 (per /app/memory/test_credentials.md)",
+  "seed_data_creation": "Created via UI/API: TEST_UI_Project (featured), TEST_UIApplicant application with test_resume.pdf, TEST_Applicant applications; email settings updated with test SMTP config (enabled=false so no real email sent). Cleanup: TEST_UI_Project_Edited deleted via DELETE /api/projects; older TEST_ applications remain in DB (informational only).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "18 pytest cases across /app/backend/tests/backend_test.py (11 regression) + /app/backend/tests/test_new_features.py (7 new). Auth header is x-admin-key: pytech-admin-2026. Careers apply is multipart FormData at POST /api/careers/apply; admin list at GET /api/careers/applications returns a JSON ARRAY (not wrapped in {applications:[]}). Email settings PUT uses field name 'pass' (not 'password'); GET returns hasPassword boolean. Projects: DELETE uses ?id=<uuid> query param. Resume download: /api/files/<storagePath>?key=<adminpw>. Admin UI: Projects delete button is icon-only Trash2 (no data-testid) — use role/tooltip or add testid if needed. Homepage 'Recently shipped' section pulls projects where featured=true. Service pages use components/site/service-cities.js with data-testid='cities-load-more'."
+}
