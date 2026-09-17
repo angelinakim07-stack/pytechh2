@@ -1,0 +1,135 @@
+{
+  "project_name": "PyTech",
+  "app_type": "marketing_site",
+  "emotional_archetype": "THE PERFORMANCE PRO & SWISS HIGH-CONTRAST",
+  "theme_strategy": "Dark mode primary (Obsidian #0B0F19 & Deep Slate #111827) with high-visibility Python Amber/Gold (#F59E0B) and Electric Teal (#06B6D4) accents. Includes light/dark mode toggle support.",
+  "typography": {
+    "font_family_heading": "'Outfit', 'Cabinet Grotesk', sans-serif",
+    "font_family_body": "'Plus Jakarta Sans', sans-serif",
+    "font_family_code": "'JetBrains Mono', 'Fira Code', monospace",
+    "font_import_url": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+    "banned_fonts": ["Inter", "Roboto", "Open Sans", "Space Grotesk"],
+    "hierarchy": {
+      "h1_hero": "text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1]",
+      "h2_section": "text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight",
+      "h3_subsection": "text-xl sm:text-2xl font-semibold tracking-tight",
+      "h4_card": "text-lg sm:text-xl font-medium tracking-tight",
+      "body": "text-base sm:text-lg leading-relaxed text-slate-300",
+      "caption_overline": "text-xs font-mono uppercase tracking-[0.25em] text-amber-400 font-semibold"
+    }
+  },
+  "color_palette": {
+    "background_dark": "#0B0F19",
+    "background_card_dark": "#111827",
+    "background_card_hover": "#1F2937",
+    "foreground_dark": "#F9FAFB",
+    "muted_foreground_dark": "#9CA3AF",
+    "primary_amber": "#F59E0B",
+    "primary_amber_glow": "rgba(245, 158, 11, 0.25)",
+    "secondary_teal": "#06B6D4",
+    "secondary_emerald": "#10B981",
+    "border_dark": "rgba(255, 255, 255, 0.08)",
+    "border_highlight": "rgba(245, 158, 11, 0.3)",
+    "background_light": "#FAFAFA",
+    "foreground_light": "#0F172A",
+    "forbidden_colors": ["#7351B7", "#1B93A4"]
+  },
+  "spacing_and_layout": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "section_padding": "py-20 lg:py-28",
+    "grid_bento": "grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-6 lg:gap-8",
+    "card_padding": "p-6 sm:p-8",
+    "header_height": "h-20"
+  },
+  "navigation_and_header": {
+    "style": "Sticky top-0 z-50 backdrop-blur-xl bg-[#0B0F19]/80 border-b border-white/10 transition-all duration-300",
+    "nav_links": [
+      { "label": "Services", "anchor": "#services" },
+      { "label": "Capabilities", "anchor": "#capabilities" },
+      { "label": "Case Studies", "anchor": "#case-studies" },
+      { "label": "Why PyTech", "anchor": "#why-us" },
+      { "label": "Testimonials", "anchor": "#testimonials" }
+    ],
+    "cta_button": "Get Architecture Audit / Book Call"
+  },
+  "key_sections": [
+    {
+      "section_id": "hero",
+      "name": "Hero Section with Terminal Live Code Stream & High Impact Value Prop",
+      "components": ["TerminalWidget", "InteractiveMetrics", "CTAButtonGroup"],
+      "layout": "Asymmetric 2-column grid: left side pitch & trust badges, right side interactive Python FastAPI/AsyncIO live snippet terminal card with glowing status indicators."
+    },
+    {
+      "section_id": "services",
+      "name": "Core Capabilities & Engineering Services",
+      "components": ["BentoServiceGrid", "TechStackBadges"],
+      "services_list": [
+        "Python Backend Architecture & FastAPI/Django Scale",
+        "Data Engineering & Distributed Pipelines (Spark, Dagster, Polars)",
+        "Enterprise AI/ML Systems & LLM Fine-Tuning",
+        "API Infrastructure & Async Microservices"
+      ]
+    },
+    {
+      "section_id": "stats_why_us",
+      "name": "Why PyTech & Stats Counter",
+      "components": ["StatGrid", "AuditProcessSteps"],
+      "metrics": ["99.99% Uptime SLA", "<12ms Median API Latency", "50M+ Daily Python Invocations", "100% Senior Engineers"]
+    },
+    {
+      "section_id": "case_studies",
+      "name": "Featured Engineering Case Studies",
+      "components": ["CaseStudyCard", "TechFilterChips"],
+      "items": [
+        "Fintech Real-Time Risk Analytics Engine (FastAPI + Redis + Polars)",
+        "Healthcare Distributed AI Pipeline (PyTorch + Ray + AWS)",
+        "E-commerce Multi-Tenant SaaS Modernization (Django + MongoDB + Celery)"
+      ]
+    },
+    {
+      "section_id": "testimonials",
+      "name": "Client Logos & Executive Testimonials",
+      "components": ["LogoMarquee", "TestimonialGrid"]
+    },
+    {
+      "section_id": "contact",
+      "name": "Interactive Contact & Project Audit Request Form",
+      "components": ["ContactForm", "BackendStatusToast"],
+      "form_fields": ["name", "email", "company", "service_interest", "message"]
+    },
+    {
+      "section_id": "footer",
+      "name": "Footer with Quick Nav, System Health Indicator & Social Links"
+    }
+  ],
+  "image_urls": {
+    "hero_code_background": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "code_developer": "https://images.unsplash.com/photo-1542831371-29b0f74f9713?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "team_office": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "team_discussion": "https://images.unsplash.com/photo-1603201667141-5a2d4c673378?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "ai_server_rack": "https://images.pexels.com/photos/17489151/pexels-photo-17489151.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "data_infrastructure": "https://images.pexels.com/photos/37730212/pexels-photo-37730212.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "case_study_screen": "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?crop=entropy&cs=srgb&fm=jpg&q=85"
+  },
+  "motion_and_interactions": {
+    "libraries": ["framer-motion", "lucide-react"],
+    "scroll_behavior": "smooth",
+    "micro_interactions": {
+      "button_hover": "hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200",
+      "card_hover": "hover:-translate-y-1 hover:border-amber-500/40 hover:shadow-[0_10px_30px_rgba(245,158,11,0.1)] transition-all duration-300"
+    }
+  },
+  "testing_and_accessibility": {
+    "data_testid_rules": "All interactive elements (nav links, buttons, inputs, form submits, filter tabs, theme toggle) MUST have descriptive data-testid attributes in kebab-case. Example: data-testid='hero-cta-button', data-testid='contact-form-submit-button'.",
+    "wcag_contrast": "Ensure text-slate-100 on dark background (#0B0F19) and text-amber-400 for high-contrast labels."
+  },
+  "instructions_to_main_agent": [
+    "Use JavaScript (.js / .jsx) components in /app/frontend/src.",
+    "Import Outfit and JetBrains Mono fonts in index.html or index.css.",
+    "Implement smooth-scrolling nav anchors for section ids (#services, #capabilities, #case-studies, #why-us, #testimonials, #contact).",
+    "Integrate Lucide React icons for tech capabilities (Terminal, Cpu, Database, Server, Workflow, CheckCircle, ArrowRight, ShieldCheck, Zap).",
+    "Ensure the contact form integrates cleanly with FastAPI/MongoDB backend API endpoint (/api/contact or similar) with loading states and Sonner toast feedback.",
+    "Ensure mobile responsiveness with hamburger overlay nav for small screens.",
+    "Maintain strict data-testid tags across all buttons, inputs, cards, and links."
+  ]
+}
