@@ -5,7 +5,12 @@ import { PricingTable } from '@/components/site/pricing-table';
 import { Reveal } from '@/components/site/reveal';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-export const metadata = {
+import { pageMetadata } from '@/lib/seo';
+
+export const dynamic = 'force-dynamic';
+export async function generateMetadata() { return pageMetadata('/pricing', BASE_METADATA); }
+
+const BASE_METADATA = {
   title: 'Pricing — Website, App, ERP, AI Automation & Marketing',
   description: 'Transparent starting prices from PyTech Digital: websites from ₹20,000 ($250), mobile apps from ₹99,999 ($1,999), plus ERP software, AI automation, digital marketing and branding. INR & USD.',
   alternates: { canonical: '/pricing' },

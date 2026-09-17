@@ -23,6 +23,19 @@ export function WhatWeDo() {
 
   return (
     <section id="what-we-do" className="relative scroll-mt-24 border-y border-border/50 bg-card/20 py-20 md:py-28" data-testid="what-we-do-section">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: 'PyTech Digital services',
+          itemListElement: list.map((o, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            item: { '@type': 'Service', name: o.title, description: o.blurb, serviceType: o.title, provider: { '@type': 'Organization', name: 'PyTech Digital Private Limited' } },
+          })),
+        }) }}
+      />
       <div className="container mx-auto px-6">
         <Reveal>
           <p className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-primary">What we actually do</p>
@@ -61,13 +74,7 @@ export function WhatWeDo() {
                         </li>
                       ))}
                     </ul>
-                    <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-4">
-                      {o.priceInr ? (
-                        <span className="text-xs text-muted-foreground">
-                          from <span className="font-display text-sm font-semibold text-foreground">₹{Number(o.priceInr).toLocaleString('en-IN')}</span>
-                          {o.priceUnit === 'month' ? '/mo' : ''}
-                        </span>
-                      ) : <span className="text-xs text-muted-foreground">{o.priceNote || 'Custom quote'}</span>}
+                    <div className="mt-5 flex items-center justify-end border-t border-border/60 pt-4">
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">Explore <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
                     </div>
                   </div>
@@ -80,7 +87,7 @@ export function WhatWeDo() {
         <Reveal delay={0.1}>
           <div className="mt-10 flex flex-wrap items-center gap-3">
             <Link href="/pricing" data-testid="what-we-do-pricing-link" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground glow-brand">
-              See starting prices <ArrowUpRight className="h-4 w-4" />
+              View pricing <ArrowUpRight className="h-4 w-4" />
             </Link>
             <Link href="/work" className="inline-flex items-center gap-1.5 rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               See our work

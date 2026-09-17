@@ -5,6 +5,7 @@ import { LlmChat, UserMessage } from 'emergentintegrations'
 import { SERVICES, LOCATIONS, JOBS, getJob, DEFAULT_OFFERINGS } from '@/lib/data'
 import { putObject, getObject, APP_NAME } from '@/lib/storage'
 import { sendApplicationEmail } from '@/lib/mailer'
+import { SEO_PAGES } from '@/lib/seo'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -89,6 +90,9 @@ async function handleRoute(request, { params }) {
         email: body.email || '',
         phone: body.phone || '',
         service: body.service || '',
+        projectType: body.projectType || '',
+        pages: body.pages || '',
+        appType: body.appType || '',
         budget: body.budget || '',
         timeline: body.timeline || '',
         message: body.message || '',
@@ -317,6 +321,27 @@ async function handleRoute(request, { params }) {
       const id = request.nextUrl.searchParams.get('id')
       if (!id) return handleCORS(NextResponse.json({ error: 'id is required' }, { status: 400 }))
       await db.collection('offerings').deleteOne({ id })
+      return handleCORS(NextResponse.json({ ok: true }))
+    }
+
+    // ---- SEO overrides (admin-editable page titles/descriptions) ----
+    if (route === '/seo' && method === 'GET') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const overrides = await db.collection('seo').find({}).toArray()
+      return handleCORS(NextResponse.json({ pages: SEO_PAGES, overrides: overrides.map(({ _id, ...rest }) => rest) }))
+    }
+    if (route === '/seo' && method === 'PUT') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const b = await request.json()
+      if (!b.path) return handleCORS(NextResponse.json({ error: 'path is required' }, { status: 400 }))
+      const set = {
+        path: b.path,
+        title: b.title || '',
+        description: b.description || '',
+        keywords: Array.isArray(b.keywords) ? b.keywords : String(b.keywords || '').split(',').map((k) => k.trim()).filter(Boolean),
+        updatedAt: new Date(),
+      }
+      await db.collection('seo').updateOne({ path: b.path }, { $set: set }, { upsert: true })
       return handleCORS(NextResponse.json({ ok: true }))
     }
 

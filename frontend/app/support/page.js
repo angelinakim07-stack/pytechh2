@@ -5,7 +5,12 @@ import { Reveal } from '@/components/site/reveal';
 import { LeadForm } from '@/components/site/lead-form';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-export const metadata = {
+import { pageMetadata } from '@/lib/seo';
+
+export const dynamic = 'force-dynamic';
+export async function generateMetadata() { return pageMetadata('/support', BASE_METADATA); }
+
+const BASE_METADATA = {
   title: 'Support Center — We\u2019re here to help',
   description: 'Get support from PyTech Digital via WhatsApp, email or phone. Raise a request and our team responds within one business day.',
   alternates: { canonical: '/support' },

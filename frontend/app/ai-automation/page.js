@@ -7,7 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { COMPANY } from '@/lib/data';
 
-export const metadata = {
+import { pageMetadata } from '@/lib/seo';
+
+export const dynamic = 'force-dynamic';
+export async function generateMetadata() { return pageMetadata('/ai-automation', BASE_METADATA); }
+
+const BASE_METADATA = {
   title: 'AI Automation — WhatsApp API, SMS & Voice Marketing',
   description: 'Automate sales & support with PyTech Digital: official WhatsApp Business API, SMS marketing, AI voice calling and Business Workflow AI. Transparent pricing tiers.',
   alternates: { canonical: `${COMPANY.url}/ai-automation` },

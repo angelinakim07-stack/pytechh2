@@ -5,6 +5,9 @@ import { Navbar } from '@/components/site/navbar';
 import { Footer } from '@/components/site/footer';
 import { TriageChatbot } from '@/components/site/triage-chatbot';
 import { WhatsAppFab } from '@/components/site/whatsapp-fab';
+import { CallFab } from '@/components/site/call-fab';
+import { BookCallDialog } from '@/components/site/book-call-dialog';
+import { pageMetadata } from '@/lib/seo';
 import { CursorGlow } from '@/components/site/cursor-glow';
 import { Analytics } from '@/components/site/analytics';
 import { COMPANY } from '@/lib/data';
@@ -12,7 +15,11 @@ import { COMPANY } from '@/lib/data';
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space', display: 'swap' });
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
-export const metadata = {
+export async function generateMetadata() {
+  return pageMetadata('/', BASE_METADATA);
+}
+
+const BASE_METADATA = {
   metadataBase: new URL(COMPANY.url),
   title: {
     default: 'PyTech Digital — Build. Brand. Market. Automate. | IT & Growth Agency Gurugram',
@@ -108,7 +115,9 @@ export default function RootLayout({ children }) {
           <main className="relative min-h-screen overflow-x-hidden">{children}</main>
           <Footer />
           <WhatsAppFab />
+          <CallFab />
           <TriageChatbot />
+          <BookCallDialog />
         </Providers>
         <Analytics />
       </body>

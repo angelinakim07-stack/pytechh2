@@ -13,7 +13,6 @@ import { RoiCalculator } from '@/components/site/roi-calculator';
 import { LeadForm } from '@/components/site/lead-form';
 import { FeaturedWork } from '@/components/site/featured-work';
 import { WhatWeDo } from '@/components/site/what-we-do';
-import { PricingTable } from '@/components/site/pricing-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -63,10 +62,10 @@ export default function HomePage() {
               </Badge>
             </motion.div>
             <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.05 }} className="font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl md:text-6xl">
-              We <span className="text-gradient">Build</span>, <span className="text-gradient">Brand</span>,<br className="hidden sm:block" /> <span className="text-gradient">Market</span> &amp; <span className="text-gradient">Automate</span><br /> ambitious businesses.
+              We build <span className="text-gradient">apps</span> &amp; <span className="text-gradient">websites</span>,<br className="hidden sm:block" /> run your <span className="text-gradient">marketing</span> &amp; <span className="text-gradient">automate</span> with AI.
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.15 }} className="mt-5 max-w-xl text-lg text-muted-foreground">
-              PyTech Digital is a full-stack IT &amp; growth firm from Gurugram — engineering software, crafting premium brands and deploying AI automation that compounds revenue.
+              Mobile apps, websites, ERP &amp; custom software, branding, digital marketing and AI automation — one Gurugram-based team that builds it, brands it, markets it and runs it.
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25 }} className="mt-8 flex flex-wrap items-center gap-3">
               <Magnetic>
@@ -229,16 +228,6 @@ export default function HomePage() {
             </Accordion>
           </div>
         </div>
-      </section>
-
-      {/* ===== PRICING TEASER ===== */}
-      <section id="pricing" className="container mx-auto scroll-mt-24 px-6 py-16 md:py-24">
-        <Reveal>
-          <p className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-primary">Pricing</p>
-          <h2 className="mt-2 font-display text-3xl font-bold tracking-tight md:text-4xl">Starting prices, stated upfront.</h2>
-          <p className="mt-3 max-w-2xl text-muted-foreground">Websites from ₹20,000. Apps from ₹99,999. Fixed scope, quoted in writing — in INR or USD.</p>
-        </Reveal>
-        <div className="mt-10"><PricingTable compact /></div>
       </section>
 
       {/* ===== CONTACT / LEAD FORM ===== */}

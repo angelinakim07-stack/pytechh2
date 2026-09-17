@@ -5,7 +5,12 @@ import { Icon } from '@/components/site/icon';
 import { Reveal } from '@/components/site/reveal';
 import { Badge } from '@/components/ui/badge';
 
-export const metadata = {
+import { pageMetadata } from '@/lib/seo';
+
+export const dynamic = 'force-dynamic';
+export async function generateMetadata() { return pageMetadata('/resources', BASE_METADATA); }
+
+const BASE_METADATA = {
   title: 'Learning Hub — Guides, Playbooks & Resources',
   description: 'Free guides and playbooks from PyTech Digital on web engineering, branding, SEO/GEO and automation. New resources added regularly.',
   alternates: { canonical: '/resources' },

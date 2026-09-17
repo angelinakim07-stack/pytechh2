@@ -4,7 +4,12 @@ import { CASE_STUDIES } from '@/lib/data';
 import { Reveal } from '@/components/site/reveal';
 import { Badge } from '@/components/ui/badge';
 
-export const metadata = {
+import { pageMetadata } from '@/lib/seo';
+
+export const dynamic = 'force-dynamic';
+export async function generateMetadata() { return pageMetadata('/case-studies', BASE_METADATA); }
+
+const BASE_METADATA = {
   title: 'Case Studies — Measurable Growth Outcomes',
   description: 'Deep-dive case studies from PyTech Digital — fintech platforms, WhatsApp automation and GEO/SEO growth with measurable results.',
   alternates: { canonical: '/case-studies' },

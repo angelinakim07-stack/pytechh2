@@ -3,7 +3,12 @@ import { MapPin } from 'lucide-react';
 import { LOCATION_GROUPS, getLocationsByGroup, LOCATIONS, COMPANY } from '@/lib/data';
 import { Reveal } from '@/components/site/reveal';
 
-export const metadata = {
+import { pageMetadata } from '@/lib/seo';
+
+export const dynamic = 'force-dynamic';
+export async function generateMetadata() { return pageMetadata('/locations', BASE_METADATA); }
+
+const BASE_METADATA = {
   title: 'Areas We Serve — Worldwide IT & Digital Services',
   description: 'PyTech Digital serves clients across Delhi NCR, India and worldwide — web & app development, branding, SEO/GEO and AI automation. Find your city.',
   alternates: { canonical: '/locations' },

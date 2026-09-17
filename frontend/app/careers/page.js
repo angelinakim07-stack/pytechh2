@@ -1,7 +1,12 @@
 import { COMPANY, JOBS } from '@/lib/data';
 import { CareersClient } from '@/components/site/careers-client';
 
-export const metadata = {
+import { pageMetadata } from '@/lib/seo';
+
+export const dynamic = 'force-dynamic';
+export async function generateMetadata() { return pageMetadata('/careers', BASE_METADATA); }
+
+const BASE_METADATA = {
   title: 'Careers — Join PyTech Digital | Jobs in Gurugram & Remote',
   description: 'Build your career at PyTech Digital. Open roles in Sales (BDE, BDM), People (HR), Engineering (Frontend, Full-Stack, iOS, Android) and Marketing (SEO, Social Media). Apply online with your resume.',
   alternates: { canonical: '/careers' },

@@ -163,6 +163,7 @@ export default function AdminPage() {
           <TabsTrigger value="projects" className="rounded-full gap-2"><FolderGit2 className="h-4 w-4" /> Projects <Badge variant="secondary" className="ml-1 rounded-full">{projects.length}</Badge></TabsTrigger>
           <TabsTrigger value="offerings" data-testid="tab-offerings" className="rounded-full gap-2"><Tags className="h-4 w-4" /> Offerings &amp; Pricing <Badge variant="secondary" className="ml-1 rounded-full">{offerings.length}</Badge></TabsTrigger>
           <TabsTrigger value="applications" className="rounded-full gap-2"><Briefcase className="h-4 w-4" /> Applications <Badge variant="secondary" className="ml-1 rounded-full">{applications.length}</Badge></TabsTrigger>
+          <TabsTrigger value="seo" data-testid="tab-seo" className="rounded-full gap-2"><Search className="h-4 w-4" /> SEO</TabsTrigger>
           <TabsTrigger value="settings" className="rounded-full gap-2"><Settings2 className="h-4 w-4" /> Email</TabsTrigger>
         </TabsList>
 
@@ -232,6 +233,9 @@ export default function AdminPage() {
                     {l.phone && <a href={`tel:${l.phone}`} className="flex items-center gap-2 hover:text-foreground"><Phone className="h-3.5 w-3.5" /> {l.phone}</a>}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
+                    {l.projectType && <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">{l.projectType}</span>}
+                    {l.pages && <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">Pages: {l.pages}</span>}
+                    {l.appType && <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">App: {l.appType}</span>}
                     {l.budget && <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">Budget: {l.budget}</span>}
                     {l.timeline && <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">Timeline: {l.timeline}</span>}
                     {l.source && <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">via {l.source}</span>}
@@ -290,6 +294,11 @@ export default function AdminPage() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* SEO */}
+        <TabsContent value="seo" className="mt-6">
+          <SeoManager adminKey={key} />
         </TabsContent>
 
         {/* EMAIL SETTINGS */}
@@ -514,6 +523,93 @@ function OfferingsManager({ adminKey, offerings, reload }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function SeoManager({ adminKey }) {
+  const [pages, setPages] = useState([]);
+  const [overrides, setOverrides] = useState({});
+  const [active, setActive] = useState('/');
+  const [form, setForm] = useState({ title: '', description: '', keywords: '' });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/seo', { headers: { 'x-admin-key': adminKey } })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d || d.error) return;
+        setPages(d.pages || []);
+        const map = {};
+        for (const o of d.overrides || []) map[o.path] = o;
+        setOverrides(map);
+      })
+      .catch(() => {});
+  }, [adminKey]);
+
+  useEffect(() => {
+    const o = overrides[active] || {};
+    setForm({ title: o.title || '', description: o.description || '', keywords: Array.isArray(o.keywords) ? o.keywords.join(', ') : '' });
+  }, [active, overrides]);
+
+  async function save(e) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch('/api/seo', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ path: active, ...form }),
+      });
+      if (!res.ok) throw new Error('failed');
+      setOverrides((m) => ({ ...m, [active]: { path: active, ...form, keywords: form.keywords.split(',').map((k) => k.trim()).filter(Boolean) } }));
+      toast.success('SEO saved — live on the page now');
+    } catch { toast.error('Could not save SEO'); }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-4">
+      <div className="lg:col-span-1">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pages</p>
+        <div className="flex flex-wrap gap-2 lg:flex-col">
+          {pages.map((p) => (
+            <button
+              key={p.path}
+              onClick={() => setActive(p.path)}
+              data-testid={`seo-page-${p.path === '/' ? 'home' : p.path.slice(1)}`}
+              className={`rounded-full border px-3.5 py-1.5 text-left text-sm transition-colors lg:rounded-lg ${active === p.path ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}
+            >
+              {p.label}
+              {overrides[p.path]?.title ? <span className="ml-1.5 text-[10px] text-primary">edited</span> : null}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <form onSubmit={save} className="h-fit rounded-2xl border border-border bg-card/50 p-6 lg:col-span-3">
+        <p className="font-display text-lg font-semibold">SEO for <span className="text-primary">{active}</span></p>
+        <p className="mt-1 text-xs text-muted-foreground">Leave a field blank to keep the built-in default. Changes go live immediately.</p>
+        <div className="mt-5 space-y-3">
+          <div>
+            <Label htmlFor="seo-title">Page title (50–60 chars ideal)</Label>
+            <Input id="seo-title" data-testid="seo-title" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} className="mt-1.5" placeholder="Website & App Development Company in Gurugram" />
+            <p className="mt-1 text-xs text-muted-foreground">{form.title.length} chars</p>
+          </div>
+          <div>
+            <Label htmlFor="seo-desc">Meta description (150–160 chars ideal)</Label>
+            <Textarea id="seo-desc" data-testid="seo-description" rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="mt-1.5" placeholder="PyTech Digital builds apps, websites, ERP software…" />
+            <p className="mt-1 text-xs text-muted-foreground">{form.description.length} chars</p>
+          </div>
+          <div>
+            <Label htmlFor="seo-kw">Keywords (comma separated)</Label>
+            <Input id="seo-kw" data-testid="seo-keywords" value={form.keywords} onChange={(e) => setForm((f) => ({ ...f, keywords: e.target.value }))} className="mt-1.5" placeholder="app development gurugram, website development india" />
+          </div>
+        </div>
+        <Button type="submit" data-testid="seo-save" disabled={saving} className="mt-5 rounded-full glow-brand">
+          {saving ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save SEO
+        </Button>
+      </form>
     </div>
   );
 }
