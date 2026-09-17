@@ -1,13 +1,19 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Users, MessagesSquare, RefreshCw, Mail, Phone, Building2, Clock, Bot, User, Lock, LogOut, Flame } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  Search, Users, MessagesSquare, RefreshCw, Mail, Phone, Building2, Clock, Bot, User, Lock, LogOut, Flame,
+  FolderGit2, FileText, Settings2, Download, Plus, Trash2, Star, Save, Send, ExternalLink, Briefcase,
+} from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 
 const KEY_STORE = 'pytech-admin-key';
 const fmt = (d) => { try { return new Date(d).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }); } catch { return ''; } };
@@ -24,6 +30,8 @@ function TierBadge({ tier }) {
   return <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${m.cls}`}>{tier === 'hot' && <Flame className="h-3 w-3" />}{m.label}</span>;
 }
 
+const EMPTY_PROJECT = { id: '', name: '', url: '', client: '', category: '', deliveryTime: '', challenges: '', description: '', tech: '', image: '', featured: false };
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [key, setKey] = useState('');
@@ -32,6 +40,8 @@ export default function AdminPage() {
 
   const [leads, setLeads] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [q, setQ] = useState('');
   const [tierFilter, setTierFilter] = useState('all');
   const [loading, setLoading] = useState(false);
@@ -56,22 +66,28 @@ export default function AdminPage() {
 
   function logout() {
     window.localStorage.removeItem(KEY_STORE);
-    setKey(''); setAuthed(false); setPwd(''); setLeads([]); setSessions([]);
+    setKey(''); setAuthed(false); setPwd(''); setLeads([]); setSessions([]); setProjects([]); setApplications([]);
   }
 
   async function load(k) {
     setLoading(true);
     try {
       const h = { 'x-admin-key': k };
-      const [lr, sr] = await Promise.all([
+      const [lr, sr, pr, ar] = await Promise.all([
         fetch('/api/leads', { headers: h }),
         fetch('/api/chat/sessions', { headers: h }),
+        fetch('/api/projects'),
+        fetch('/api/careers/applications', { headers: h }),
       ]);
       if (lr.status === 401 || sr.status === 401) { logout(); return; }
       const l = await lr.json();
       const s = await sr.json();
+      const p = await pr.json();
+      const a = await ar.json();
       setLeads(Array.isArray(l) ? l : []);
       setSessions(s?.sessions || []);
+      setProjects(Array.isArray(p?.projects) ? p.projects : []);
+      setApplications(Array.isArray(a) ? a : []);
     } catch (e) { /* noop */ }
     setLoading(false);
   }
@@ -102,7 +118,7 @@ export default function AdminPage() {
         <form onSubmit={login} className="w-full max-w-sm rounded-2xl border border-border bg-card/60 p-8">
           <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary/15 text-primary"><Lock className="h-6 w-6" /></span>
           <h1 className="mt-4 font-display text-2xl font-bold">Team access</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Enter the password to view leads &amp; conversations.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Enter the password to manage leads, projects &amp; careers.</p>
           <div className="mt-6">
             <Label htmlFor="pwd">Password</Label>
             <Input id="pwd" type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} className="mt-1.5" placeholder="••••••••" autoFocus />
@@ -119,8 +135,8 @@ export default function AdminPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-primary">Internal</p>
-          <h1 className="mt-1 font-display text-3xl font-bold tracking-tight md:text-4xl">Leads &amp; Conversations</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Every lead submission and AI chatbot conversation, auto-scored by Ada.</p>
+          <h1 className="mt-1 font-display text-3xl font-bold tracking-tight md:text-4xl">Admin dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Leads, AI conversations, projects &amp; career applications.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => load(key)} className="rounded-full" disabled={loading}>
@@ -132,13 +148,16 @@ export default function AdminPage() {
 
       <div className="relative mt-6 max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, message…" className="rounded-full pl-9" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search leads & conversations…" className="rounded-full pl-9" />
       </div>
 
       <Tabs defaultValue="chats" className="mt-8">
-        <TabsList className="rounded-full">
-          <TabsTrigger value="chats" className="rounded-full gap-2"><MessagesSquare className="h-4 w-4" /> Conversations <Badge variant="secondary" className="ml-1 rounded-full">{sessions.length}</Badge></TabsTrigger>
+        <TabsList className="flex flex-wrap gap-1 rounded-2xl">
+          <TabsTrigger value="chats" className="rounded-full gap-2"><MessagesSquare className="h-4 w-4" /> Chats <Badge variant="secondary" className="ml-1 rounded-full">{sessions.length}</Badge></TabsTrigger>
           <TabsTrigger value="leads" className="rounded-full gap-2"><Users className="h-4 w-4" /> Leads <Badge variant="secondary" className="ml-1 rounded-full">{leads.length}</Badge></TabsTrigger>
+          <TabsTrigger value="projects" className="rounded-full gap-2"><FolderGit2 className="h-4 w-4" /> Projects <Badge variant="secondary" className="ml-1 rounded-full">{projects.length}</Badge></TabsTrigger>
+          <TabsTrigger value="applications" className="rounded-full gap-2"><Briefcase className="h-4 w-4" /> Applications <Badge variant="secondary" className="ml-1 rounded-full">{applications.length}</Badge></TabsTrigger>
+          <TabsTrigger value="settings" className="rounded-full gap-2"><Settings2 className="h-4 w-4" /> Email</TabsTrigger>
         </TabsList>
 
         {/* CONVERSATIONS */}
@@ -219,8 +238,221 @@ export default function AdminPage() {
             </div>
           )}
         </TabsContent>
+
+        {/* PROJECTS */}
+        <TabsContent value="projects" className="mt-6">
+          <ProjectsManager adminKey={key} projects={projects} reload={() => load(key)} />
+        </TabsContent>
+
+        {/* APPLICATIONS */}
+        <TabsContent value="applications" className="mt-6">
+          {applications.length === 0 ? (
+            <Empty loading={loading} label="No applications yet. Career applications appear here with resume downloads." />
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {applications.map((a) => (
+                <div key={a.id} className="rounded-2xl border border-border bg-card/50 p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-display font-semibold">{a.name}</p>
+                      <Badge className="mt-1 rounded-full">{a.role}</Badge>
+                    </div>
+                    {a.emailStatus && <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${a.emailStatus === 'sent' ? 'bg-emerald-500/15 text-emerald-400' : a.emailStatus === 'failed' ? 'bg-red-500/15 text-red-400' : 'bg-muted text-muted-foreground'}`}>email: {a.emailStatus}</span>}
+                  </div>
+                  <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+                    {a.email && <a href={`mailto:${a.email}`} className="flex items-center gap-2 hover:text-foreground"><Mail className="h-3.5 w-3.5" /> {a.email}</a>}
+                    {a.phone && <a href={`tel:${a.phone}`} className="flex items-center gap-2 hover:text-foreground"><Phone className="h-3.5 w-3.5" /> {a.phone}</a>}
+                    {a.experience && <p className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> {a.experience}</p>}
+                    {a.company && <p className="flex items-center gap-2"><Building2 className="h-3.5 w-3.5" /> {a.company}</p>}
+                    {a.portfolio && <a href={a.portfolio} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-foreground"><ExternalLink className="h-3.5 w-3.5" /> Portfolio / LinkedIn</a>}
+                  </div>
+                  {a.coverLetter && <p className="mt-3 rounded-lg bg-background/50 p-3 text-sm text-muted-foreground">{a.coverLetter}</p>}
+                  <div className="mt-4 flex items-center justify-between">
+                    {a.resume ? (
+                      <a href={`/api/files/${a.resume.storagePath}?key=${encodeURIComponent(key)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/25">
+                        <Download className="h-3.5 w-3.5" /> {a.resume.filename || 'Resume'}
+                      </a>
+                    ) : <span className="text-xs text-muted-foreground">No resume attached</span>}
+                    <span className="text-xs text-muted-foreground/70">{fmt(a.createdAt)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* EMAIL SETTINGS */}
+        <TabsContent value="settings" className="mt-6">
+          <EmailSettings adminKey={key} />
+        </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function ProjectsManager({ adminKey, projects, reload }) {
+  const [form, setForm] = useState(EMPTY_PROJECT);
+  const [saving, setSaving] = useState(false);
+  const editing = !!form.id;
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  async function save(e) {
+    e.preventDefault();
+    if (!form.name.trim()) { toast.error('Project name is required'); return; }
+    setSaving(true);
+    try {
+      const method = editing ? 'PUT' : 'POST';
+      const res = await fetch('/api/projects', { method, headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey }, body: JSON.stringify(form) });
+      if (!res.ok) throw new Error('failed');
+      toast.success(editing ? 'Project updated' : 'Project added');
+      setForm(EMPTY_PROJECT);
+      reload();
+    } catch { toast.error('Could not save project'); }
+    finally { setSaving(false); }
+  }
+
+  async function remove(id) {
+    if (!window.confirm('Delete this project?')) return;
+    try {
+      const res = await fetch(`/api/projects?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-admin-key': adminKey } });
+      if (!res.ok) throw new Error('failed');
+      toast.success('Project deleted');
+      reload();
+    } catch { toast.error('Could not delete'); }
+  }
+
+  async function toggleFeatured(p) {
+    try {
+      await fetch('/api/projects', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey }, body: JSON.stringify({ id: p.id, featured: !p.featured }) });
+      reload();
+    } catch { toast.error('Could not update'); }
+  }
+
+  function edit(p) {
+    setForm({ ...EMPTY_PROJECT, ...p, tech: Array.isArray(p.tech) ? p.tech.join(', ') : (p.tech || '') });
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const inp = 'mt-1.5';
+  return (
+    <div className="grid gap-6 lg:grid-cols-5">
+      <form onSubmit={save} className="lg:col-span-2 h-fit rounded-2xl border border-border bg-card/50 p-5">
+        <p className="font-display text-lg font-semibold">{editing ? 'Edit project' : 'Add a project'}</p>
+        <div className="mt-4 space-y-3">
+          <div><Label htmlFor="p-name">Project name *</Label><Input id="p-name" data-testid="project-name" value={form.name} onChange={set('name')} className={inp} placeholder="Velocity Trading Platform" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label htmlFor="p-client">Client</Label><Input id="p-client" value={form.client} onChange={set('client')} className={inp} placeholder="Velocity Markets" /></div>
+            <div><Label htmlFor="p-cat">Category</Label><Input id="p-cat" value={form.category} onChange={set('category')} className={inp} placeholder="Web App" /></div>
+          </div>
+          <div><Label htmlFor="p-url">Project URL</Label><Input id="p-url" data-testid="project-url" value={form.url} onChange={set('url')} className={inp} placeholder="https://…" /></div>
+          <div><Label htmlFor="p-delivery">Delivery time</Label><Input id="p-delivery" data-testid="project-delivery" value={form.deliveryTime} onChange={set('deliveryTime')} className={inp} placeholder="e.g. 8 weeks" /></div>
+          <div><Label htmlFor="p-tech">Tech (comma separated)</Label><Input id="p-tech" value={form.tech} onChange={set('tech')} className={inp} placeholder="Next.js, MongoDB, Redis" /></div>
+          <div><Label htmlFor="p-image">Image URL</Label><Input id="p-image" value={form.image} onChange={set('image')} className={inp} placeholder="https://…" /></div>
+          <div><Label htmlFor="p-desc">Short description</Label><Textarea id="p-desc" value={form.description} onChange={set('description')} className={inp} rows={2} placeholder="One or two lines about the project." /></div>
+          <div><Label htmlFor="p-chal">Challenges faced</Label><Textarea id="p-chal" data-testid="project-challenges" value={form.challenges} onChange={set('challenges')} className={inp} rows={3} placeholder="What challenges did we solve?" /></div>
+          <label className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-background/50 px-3 py-2">
+            <span className="flex items-center gap-2 text-sm"><Star className="h-4 w-4 text-primary" /> Feature on homepage</span>
+            <Switch checked={form.featured} onCheckedChange={(v) => setForm((f) => ({ ...f, featured: v }))} />
+          </label>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Button type="submit" data-testid="project-save" disabled={saving} className="flex-1 rounded-full glow-brand">
+            {saving ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {editing ? 'Update' : 'Add project'}
+          </Button>
+          {editing && <Button type="button" variant="outline" className="rounded-full" onClick={() => setForm(EMPTY_PROJECT)}>Cancel</Button>}
+        </div>
+      </form>
+
+      <div className="lg:col-span-3">
+        {projects.length === 0 ? (
+          <Empty label="No projects yet. Add your first project on the left — it will show on the public Our Work page." />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {projects.map((p) => (
+              <div key={p.id} className="flex flex-col rounded-2xl border border-border bg-card/50 p-4">
+                {p.image && <img src={p.image} alt={p.name} className="mb-3 h-28 w-full rounded-lg object-cover" />}
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-display font-semibold">{p.name}</p>
+                  {p.featured && <Star className="h-4 w-4 flex-none fill-primary text-primary" />}
+                </div>
+                {p.category && <span className="mt-1 text-xs text-muted-foreground">{p.category}{p.client ? ` · ${p.client}` : ''}</span>}
+                {p.deliveryTime && <span className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground"><Clock className="h-3 w-3" /> {p.deliveryTime}</span>}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" className="rounded-full" onClick={() => edit(p)}>Edit</Button>
+                  <Button size="sm" variant="ghost" className="rounded-full" onClick={() => toggleFeatured(p)}>{p.featured ? 'Unfeature' : 'Feature'}</Button>
+                  <Button size="sm" variant="ghost" className="rounded-full text-destructive hover:text-destructive" onClick={() => remove(p.id)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EmailSettings({ adminKey }) {
+  const [cfg, setCfg] = useState({ host: 'smtp.gmail.com', port: 465, user: '', recipient: '', fromName: 'PyTech Careers', enabled: false, hasPassword: false });
+  const [pass, setPass] = useState('');
+  const [saving, setSaving] = useState(false);
+  const set = (k) => (e) => setCfg((c) => ({ ...c, [k]: e.target.value }));
+
+  useEffect(() => {
+    fetch('/api/settings/email', { headers: { 'x-admin-key': adminKey } })
+      .then((r) => r.json())
+      .then((d) => { if (d && !d.error) setCfg((c) => ({ ...c, ...d })); })
+      .catch(() => {});
+  }, [adminKey]);
+
+  async function save(e) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const body = { ...cfg };
+      if (pass) body.pass = pass;
+      const res = await fetch('/api/settings/email', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error('failed');
+      toast.success('Email settings saved');
+      setPass('');
+      setCfg((c) => ({ ...c, hasPassword: c.hasPassword || !!pass }));
+    } catch { toast.error('Could not save settings'); }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <form onSubmit={save} className="max-w-xl rounded-2xl border border-border bg-card/50 p-6">
+      <div className="flex items-start gap-3">
+        <span className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-primary/15 text-primary"><Mail className="h-5 w-5" /></span>
+        <div>
+          <p className="font-display text-lg font-semibold">Job application email (Gmail SMTP)</p>
+          <p className="mt-1 text-sm text-muted-foreground">Applications are emailed here with the resume attached. Use a Gmail <b>App Password</b> (needs 2-Step Verification on).</p>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-3">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-span-2"><Label htmlFor="s-host">SMTP host</Label><Input id="s-host" value={cfg.host} onChange={set('host')} className="mt-1.5" /></div>
+          <div><Label htmlFor="s-port">Port</Label><Input id="s-port" value={cfg.port} onChange={set('port')} className="mt-1.5" /></div>
+        </div>
+        <div><Label htmlFor="s-user">Sender Gmail address</Label><Input id="s-user" data-testid="email-user" value={cfg.user} onChange={set('user')} className="mt-1.5" placeholder="rajeev.pytech@gmail.com" /></div>
+        <div>
+          <Label htmlFor="s-pass">Gmail App Password (16 chars)</Label>
+          <Input id="s-pass" data-testid="email-pass" type="password" value={pass} onChange={(e) => setPass(e.target.value)} className="mt-1.5" placeholder={cfg.hasPassword ? '•••••••• (saved — leave blank to keep)' : 'abcd efgh ijkl mnop'} />
+          <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="h-3 w-3" /> Get an App Password</a>
+        </div>
+        <div><Label htmlFor="s-recipient">Recipient (where applications land)</Label><Input id="s-recipient" data-testid="email-recipient" value={cfg.recipient} onChange={set('recipient')} className="mt-1.5" placeholder="rajeev.pytech@gmail.com" /></div>
+        <div><Label htmlFor="s-from">From name</Label><Input id="s-from" value={cfg.fromName} onChange={set('fromName')} className="mt-1.5" /></div>
+        <label className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-background/50 px-3 py-2.5">
+          <span className="flex items-center gap-2 text-sm"><Send className="h-4 w-4 text-primary" /> Send application emails</span>
+          <Switch checked={cfg.enabled} onCheckedChange={(v) => setCfg((c) => ({ ...c, enabled: v }))} data-testid="email-enabled" />
+        </label>
+      </div>
+
+      <Button type="submit" data-testid="email-save" disabled={saving} className="mt-5 w-full rounded-full glow-brand">
+        {saving ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save email settings
+      </Button>
+      <p className="mt-3 text-center text-xs text-muted-foreground">Until enabled, applications &amp; resumes are still saved here in the Applications tab.</p>
+    </form>
   );
 }
 

@@ -2,7 +2,9 @@ import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NextResponse } from 'next/server'
 import { LlmChat, UserMessage } from 'emergentintegrations'
-import { SERVICES, LOCATIONS } from '@/lib/data'
+import { SERVICES, LOCATIONS, JOBS, getJob } from '@/lib/data'
+import { putObject, getObject, APP_NAME } from '@/lib/storage'
+import { sendApplicationEmail } from '@/lib/mailer'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -70,7 +72,7 @@ async function handleRoute(request, { params }) {
       return handleCORS(NextResponse.json({ ok: true }))
     }
     const isAdmin = () => {
-      const key = request.headers.get('x-admin-key')
+      const key = request.headers.get('x-admin-key') || request.nextUrl.searchParams.get('key')
       return !!key && key === (process.env.ADMIN_PASSWORD || '')
     }
 
@@ -211,6 +213,170 @@ async function handleRoute(request, { params }) {
       const msgs = await db.collection('chat_messages')
         .find({ sessionId }).sort({ createdAt: 1 }).toArray()
       return handleCORS(NextResponse.json({ sessionId, messages: msgs.map(({ _id, ...r }) => r) }))
+    }
+
+    // ---- Projects (public read, admin write) ----
+    if (route === '/projects' && method === 'GET') {
+      const projects = await db.collection('projects').find({}).sort({ order: 1, createdAt: -1 }).limit(200).toArray()
+      return handleCORS(NextResponse.json({ projects: projects.map(({ _id, ...rest }) => rest) }))
+    }
+    if (route === '/projects' && method === 'POST') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const b = await request.json()
+      if (!b.name) return handleCORS(NextResponse.json({ error: 'name is required' }, { status: 400 }))
+      const project = {
+        id: uuidv4(),
+        name: b.name,
+        url: b.url || '',
+        client: b.client || '',
+        category: b.category || '',
+        deliveryTime: b.deliveryTime || '',
+        challenges: b.challenges || '',
+        description: b.description || '',
+        tech: Array.isArray(b.tech) ? b.tech : (b.tech ? String(b.tech).split(',').map((t) => t.trim()).filter(Boolean) : []),
+        image: b.image || '',
+        featured: !!b.featured,
+        order: Number(b.order) || 0,
+        createdAt: new Date(),
+      }
+      await db.collection('projects').insertOne(project)
+      const { _id, ...clean } = project
+      return handleCORS(NextResponse.json({ ok: true, project: clean }))
+    }
+    if (route === '/projects' && method === 'PUT') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const b = await request.json()
+      if (!b.id) return handleCORS(NextResponse.json({ error: 'id is required' }, { status: 400 }))
+      const set = {}
+      for (const f of ['name', 'url', 'client', 'category', 'deliveryTime', 'challenges', 'description', 'image']) if (f in b) set[f] = b[f]
+      if ('featured' in b) set.featured = !!b.featured
+      if ('order' in b) set.order = Number(b.order) || 0
+      if ('tech' in b) set.tech = Array.isArray(b.tech) ? b.tech : String(b.tech).split(',').map((t) => t.trim()).filter(Boolean)
+      set.updatedAt = new Date()
+      await db.collection('projects').updateOne({ id: b.id }, { $set: set })
+      return handleCORS(NextResponse.json({ ok: true }))
+    }
+    if (route === '/projects' && method === 'DELETE') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const id = request.nextUrl.searchParams.get('id')
+      if (!id) return handleCORS(NextResponse.json({ error: 'id is required' }, { status: 400 }))
+      await db.collection('projects').deleteOne({ id })
+      return handleCORS(NextResponse.json({ ok: true }))
+    }
+
+    // ---- Careers: application submission (multipart with resume) ----
+    if (route === '/careers/apply' && method === 'POST') {
+      const form = await request.formData()
+      const get = (k) => (form.get(k) ? String(form.get(k)).trim() : '')
+      const application = {
+        id: uuidv4(),
+        role: get('role') || 'General application',
+        roleSlug: get('roleSlug'),
+        name: get('name'),
+        email: get('email'),
+        phone: get('phone'),
+        experience: get('experience'),
+        company: get('company'),
+        portfolio: get('portfolio'),
+        coverLetter: get('coverLetter'),
+        createdAt: new Date(),
+        resume: null,
+        emailStatus: 'not_sent',
+      }
+      if (!application.name || !application.email) {
+        return handleCORS(NextResponse.json({ error: 'name and email are required' }, { status: 400 }))
+      }
+
+      // Upload resume to object storage (if provided)
+      const file = form.get('resume')
+      if (file && typeof file.arrayBuffer === 'function' && file.size > 0) {
+        if (file.size > 10 * 1024 * 1024) {
+          return handleCORS(NextResponse.json({ error: 'Resume must be under 10MB' }, { status: 400 }))
+        }
+        const orig = file.name || 'resume'
+        const ext = orig.includes('.') ? orig.split('.').pop().toLowerCase().slice(0, 8) : 'pdf'
+        const storagePath = `${APP_NAME}/resumes/${application.id}.${ext}`
+        const buffer = Buffer.from(await file.arrayBuffer())
+        try {
+          const result = await putObject(storagePath, buffer, file.type || 'application/octet-stream')
+          application.resume = { storagePath: result.path || storagePath, filename: orig, contentType: file.type || 'application/octet-stream', size: file.size }
+        } catch (e) {
+          console.error('Resume upload failed:', e)
+        }
+      }
+
+      await db.collection('applications').insertOne(application)
+
+      // Send email notification (best-effort) using admin-configured settings
+      try {
+        const cfg = await db.collection('settings').findOne({ _id: 'email' })
+        if (cfg && cfg.enabled && cfg.user && cfg.pass) {
+          let attachment = null
+          if (application.resume) {
+            try {
+              const { buffer, contentType } = await getObject(application.resume.storagePath)
+              attachment = { filename: application.resume.filename, content: buffer, contentType }
+            } catch (e) { /* attach best-effort */ }
+          }
+          const adminUrl = `${request.nextUrl.origin}/admin`
+          await sendApplicationEmail(cfg, application, attachment, adminUrl)
+          await db.collection('applications').updateOne({ id: application.id }, { $set: { emailStatus: 'sent' } })
+        }
+      } catch (e) {
+        console.error('Application email failed:', e)
+        await db.collection('applications').updateOne({ id: application.id }, { $set: { emailStatus: 'failed', emailError: String(e?.message || e) } })
+      }
+
+      return handleCORS(NextResponse.json({ ok: true, id: application.id }))
+    }
+
+    if (route === '/careers/applications' && method === 'GET') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const apps = await db.collection('applications').find({}).sort({ createdAt: -1 }).limit(500).toArray()
+      return handleCORS(NextResponse.json(apps.map(({ _id, emailError, ...rest }) => rest)))
+    }
+
+    // ---- Email settings (admin) ----
+    if (route === '/settings/email' && method === 'GET') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const cfg = await db.collection('settings').findOne({ _id: 'email' })
+      return handleCORS(NextResponse.json({
+        host: cfg?.host || 'smtp.gmail.com',
+        port: cfg?.port || 465,
+        user: cfg?.user || '',
+        recipient: cfg?.recipient || '',
+        fromName: cfg?.fromName || 'PyTech Careers',
+        enabled: !!cfg?.enabled,
+        hasPassword: !!cfg?.pass,
+      }))
+    }
+    if (route === '/settings/email' && method === 'PUT') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const b = await request.json()
+      const set = {
+        host: b.host || 'smtp.gmail.com',
+        port: Number(b.port) || 465,
+        user: b.user || '',
+        recipient: b.recipient || b.user || '',
+        fromName: b.fromName || 'PyTech Careers',
+        enabled: !!b.enabled,
+        updatedAt: new Date(),
+      }
+      if (typeof b.pass === 'string' && b.pass.length > 0) set.pass = b.pass.replace(/\s+/g, '')
+      await db.collection('settings').updateOne({ _id: 'email' }, { $set: set }, { upsert: true })
+      return handleCORS(NextResponse.json({ ok: true }))
+    }
+
+    // ---- File download (admin) — serves resumes from object storage ----
+    if (route.startsWith('/files/') && method === 'GET') {
+      if (!isAdmin()) return handleCORS(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }))
+      const storagePath = route.slice('/files/'.length)
+      try {
+        const { buffer, contentType } = await getObject(storagePath)
+        return new NextResponse(buffer, { status: 200, headers: { 'Content-Type': contentType, 'Content-Disposition': 'inline' } })
+      } catch (e) {
+        return handleCORS(NextResponse.json({ error: 'File not found' }, { status: 404 }))
+      }
     }
 
     return handleCORS(NextResponse.json({ error: `Route ${route} not found` }, { status: 404 }))

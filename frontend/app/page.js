@@ -11,6 +11,7 @@ import { Hero3D } from '@/components/site/hero-3d';
 import { ClientTicker } from '@/components/site/client-ticker';
 import { RoiCalculator } from '@/components/site/roi-calculator';
 import { LeadForm } from '@/components/site/lead-form';
+import { FeaturedWork } from '@/components/site/featured-work';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -166,6 +167,9 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* ===== FEATURED WORK (admin-managed projects) ===== */}
+      <FeaturedWork />
 
       {/* ===== GEO / KNOWLEDGE BLOCK ===== */}
       <section className="container mx-auto px-6 py-16 md:py-24">

@@ -11,6 +11,8 @@ export default function sitemap() {
     { path: '/case-studies', priority: 0.8, freq: 'weekly' },
     { path: '/resources', priority: 0.7, freq: 'weekly' },
     { path: '/support', priority: 0.5, freq: 'monthly' },
+    { path: '/work', priority: 0.7, freq: 'weekly' },
+    { path: '/careers', priority: 0.6, freq: 'weekly' },
   ].map((s) => ({ url: `${base}${s.path}`, lastModified: now, changeFrequency: s.freq, priority: s.priority }));
 
   const serviceDetailUrls = SERVICES.map((s) => ({

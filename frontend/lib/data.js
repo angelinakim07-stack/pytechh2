@@ -461,3 +461,76 @@ export const buildLocationFaqs = (location) => [
   { q: `How much does it cost to hire PyTech Digital in ${location.name}?`, a: `Pricing depends on scope. We offer transparent fixed-scope packages and monthly retainers for ${location.name} clients. Book a free strategy call for a tailored quote.` },
   { q: `How do I get started in ${location.name}?`, a: `Book a free strategy call or send an enquiry. We'll scope your project and share a tailored plan — usually within one business day.` },
 ];
+
+
+// ---- Careers: open roles ----
+export const JOB_DEPARTMENTS = ['Sales', 'People', 'Engineering', 'Design', 'Marketing'];
+
+export const JOBS = [
+  {
+    slug: 'business-development-executive', title: 'Business Development Executive (BDE)', department: 'Sales',
+    type: 'Full-time', location: 'Gurugram / Remote', experience: '0–2 years', icon: 'TrendingUp',
+    blurb: 'Own top-of-funnel growth — prospect, qualify and open conversations with businesses that need Build, Brand, Market or Automate.',
+    responsibilities: ['Research and prospect target accounts across India & global markets', 'Run outbound via email, LinkedIn, WhatsApp and calls', 'Qualify inbound leads and book strategy calls', 'Maintain a clean CRM and accurate pipeline'],
+    requirements: ['Excellent written & spoken English', 'Comfort with outreach and rejection', 'Curiosity about tech, marketing & AI', 'Any graduate; sales internship a plus'],
+  },
+  {
+    slug: 'business-development-manager', title: 'Business Development Manager (BDM)', department: 'Sales',
+    type: 'Full-time', location: 'Gurugram', experience: '3–6 years', icon: 'Briefcase',
+    blurb: 'Lead the sales motion end-to-end — from qualified pipeline to closed deals and long-term client relationships.',
+    responsibilities: ['Own quarterly revenue targets', 'Run discovery, scoping and proposals with the delivery team', 'Negotiate and close mid-to-large engagements', 'Mentor BDEs and improve the sales playbook'],
+    requirements: ['3+ years B2B services / IT sales', 'Track record of closing ₹10L+ deals', 'Strong commercial and negotiation skills', 'CRM discipline and forecasting'],
+  },
+  {
+    slug: 'hr-executive', title: 'HR Executive', department: 'People',
+    type: 'Full-time', location: 'Gurugram', experience: '1–4 years', icon: 'Users',
+    blurb: 'Run hiring and people ops — from sourcing great talent to keeping the team happy and productive.',
+    responsibilities: ['Own end-to-end recruitment across roles', 'Manage onboarding, records and payroll inputs', 'Drive engagement, culture and performance cycles', 'Handle HR compliance and documentation'],
+    requirements: ['1+ year in HR / talent acquisition', 'Great people and communication skills', 'Organised, discreet and process-oriented', 'MBA-HR or equivalent a plus'],
+  },
+  {
+    slug: 'frontend-developer', title: 'Frontend Developer', department: 'Engineering',
+    type: 'Full-time', location: 'Gurugram / Remote', experience: '1–4 years', icon: 'Code2',
+    blurb: 'Build fast, accessible, pixel-perfect interfaces in React & Next.js that convert and delight.',
+    responsibilities: ['Build responsive UIs with React, Next.js & Tailwind', 'Turn Figma designs into production components', 'Optimise Core Web Vitals and accessibility', 'Integrate REST APIs and handle state cleanly'],
+    requirements: ['Strong JavaScript, React & CSS', 'Experience with Next.js and Tailwind', 'Eye for detail and motion/animation', 'Git and modern tooling'],
+  },
+  {
+    slug: 'full-stack-developer', title: 'Full-Stack Developer', department: 'Engineering',
+    type: 'Full-time', location: 'Gurugram / Remote', experience: '2–5 years', icon: 'Server',
+    blurb: 'Own features end-to-end across the stack — from database and APIs to polished frontend.',
+    responsibilities: ['Design and build APIs and data models', 'Ship full features across frontend and backend', 'Work with MongoDB / SQL and cloud services', 'Write clean, tested, maintainable code'],
+    requirements: ['Node.js + React/Next.js proficiency', 'Solid database and API design skills', 'Understanding of auth, security & deployment', 'Ownership mindset'],
+  },
+  {
+    slug: 'ios-developer', title: 'iOS Developer', department: 'Engineering',
+    type: 'Full-time', location: 'Gurugram / Remote', experience: '2–5 years', icon: 'Smartphone',
+    blurb: 'Craft native-grade iOS apps with smooth UX and app-store-ready polish.',
+    responsibilities: ['Build and ship iOS apps (Swift / React Native)', 'Integrate APIs, push and in-app messaging', 'Optimise performance and offline behaviour', 'Manage App Store releases'],
+    requirements: ['Swift and/or React Native experience', 'Published apps on the App Store', 'Strong grasp of iOS UI patterns', 'Attention to detail'],
+  },
+  {
+    slug: 'android-developer', title: 'Android Developer', department: 'Engineering',
+    type: 'Full-time', location: 'Gurugram / Remote', experience: '2–5 years', icon: 'Smartphone',
+    blurb: 'Build reliable, performant Android apps used by thousands of people.',
+    responsibilities: ['Build and ship Android apps (Kotlin / React Native)', 'Integrate APIs, notifications and analytics', 'Optimise for performance and battery', 'Manage Play Store releases'],
+    requirements: ['Kotlin and/or React Native experience', 'Published apps on the Play Store', 'Strong grasp of Material Design', 'Ownership mindset'],
+  },
+  {
+    slug: 'seo-specialist', title: 'SEO Specialist', department: 'Marketing',
+    type: 'Full-time', location: 'Gurugram / Remote', experience: '1–4 years', icon: 'Search',
+    blurb: 'Grow organic revenue with technical, content and AI/GEO SEO that compounds.',
+    responsibilities: ['Run technical audits and on-page optimisation', 'Plan programmatic and topical content', 'Build authority and track rankings', 'Implement GEO so LLMs cite our clients'],
+    requirements: ['Hands-on SEO experience with real results', 'Comfort with GA4, Search Console & tools', 'Understanding of technical + content SEO', 'Bonus: AI SEO / GEO exposure'],
+  },
+  {
+    slug: 'social-media-manager', title: 'Social Media Manager', department: 'Marketing',
+    type: 'Full-time', location: 'Gurugram', experience: '1–4 years', icon: 'Megaphone',
+    blurb: 'Own our (and our clients\u2019) social presence — strategy, content and community that builds brands.',
+    responsibilities: ['Plan and run content calendars across platforms', 'Brief design/video and write scroll-stopping copy', 'Grow engagement and community', 'Report on reach, growth and conversions'],
+    requirements: ['Proven social growth experience', 'Great copywriting and trend sense', 'Comfort with analytics and scheduling tools', 'Basic design/video literacy'],
+  },
+];
+
+export const getJob = (slug) => JOBS.find((j) => j.slug === slug) || null;
+export const getJobsByDepartment = (dept) => JOBS.filter((j) => j.department === dept);

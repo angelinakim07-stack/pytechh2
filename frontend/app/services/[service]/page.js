@@ -5,6 +5,7 @@ import { getService, buildServiceFaqs, getServicesByPillar, getPillar, PROCESS, 
 import { Icon } from '@/components/site/icon';
 import { Reveal } from '@/components/site/reveal';
 import { ServiceExtras } from '@/components/site/service-extras';
+import { ServiceCities } from '@/components/site/service-cities';
 import { LeadForm } from '@/components/site/lead-form';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -144,13 +145,7 @@ export default async function ServiceDetailPage({ params }) {
           <h2 className="font-display text-2xl font-bold md:text-3xl">{service.name} near you</h2>
           <p className="mt-2 text-muted-foreground">We deliver {service.name} across India and globally.</p>
         </Reveal>
-        <div className="mt-5 flex flex-wrap gap-2">
-          {LOCATIONS.map((l) => (
-            <Link key={l.slug} href={`/services/${slug}/${l.slug}`} className="flex items-center gap-1.5 rounded-full border border-border bg-card/50 px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground">
-              <MapPin className="h-3.5 w-3.5" /> {l.name}
-            </Link>
-          ))}
-        </div>
+        <ServiceCities slug={slug} />
       </section>
 
       {/* Related */}
